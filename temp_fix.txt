@@ -1,0 +1,9 @@
+import { useState, useCallback, type ReactNode } from 'react'
+import { addTextNode, addImageNode, addLinkNode } from '../../services/db'
+
+interface DropZoneProps {
+  projectId: number
+  children: ReactNode
+}
+
+export default function DropZone({ projectId, children }: DropZoneProps) {

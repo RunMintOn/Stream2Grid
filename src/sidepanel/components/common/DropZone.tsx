@@ -6,13 +6,6 @@ interface DropZoneProps {
   children: ReactNode
 }
 
-interface DragPayload {
-  sourceUrl: string
-  sourceTitle: string
-  type: 'text' | 'image' | 'link'
-  content: string | null
-}
-
 export default function DropZone({ projectId, children }: DropZoneProps) {
   const [isDragOver, setIsDragOver] = useState(false)
 
@@ -59,12 +52,12 @@ export default function DropZone({ projectId, children }: DropZoneProps) {
 
     // Try to get custom payload first
     const rawData = e.dataTransfer.getData('application/webcanvas-payload')
-    
+
     if (rawData) {
       try {
-        const payload: DragPayload = JSON.parse(rawData)
+        const payload = JSON.parse(rawData)
         const icon = getFavicon(payload.sourceUrl)
-        
+
         if (payload.type === 'text' && payload.content) {
           await addTextNode(projectId, payload.content, payload.sourceUrl, icon)
         } else if (payload.type === 'link' && payload.content) {
@@ -112,6 +105,59 @@ export default function DropZone({ projectId, children }: DropZoneProps) {
     }
   }, [projectId])
 
+  // ========== NEW: Paste Handler ==========
+  const handlePaste = useCallback(async (e: React.ClipboardEvent) => {
+    e.preventDefault()
+
+    console.log('[WebCanvas] Paste event triggered')
+
+    // Type 1: Handle plain text from clipboard
+    const clipboardText = e.clipboardData.getData('text/plain')
+    if (clipboardText && clipboardText.trim()) {
+      const icon = getFavicon(window.location.href)
+      await addTextNode(projectId, clipboardText.trim(), window.location.href, icon)
+      console.log('[WebCanvas] Pasted text:', clipboardText.substring(0, 50) + '...')
+      return
+    }
+
+    // Type 2: Handle images from clipboard
+    const clipboardItems = e.clipboardData.items
+    if (Array.isArray(clipboardItems) && clipboardItems.length > 0) {
+      for (const item of clipboardItems) {
+        // Check for image types using kind property
+        if (item.kind === 'file' && (item as any).type && (item as any).type.startsWith('image/')) {
+          const imageFile = item.getAsFile()
+          if (imageFile && imageFile.type.startsWith('image/')) {
+            const fileName = `image-${Date.now()}.${imageFile.type.split('/')[1]}`
+            console.log('[WebCanvas] Pasted image:', fileName, 'size:', imageFile.size)
+            await addImageNode(projectId, imageFile, fileName, window.location.href)
+            return
+          }
+        }
+      }
+    }
+
+    // Type 3: Handle URLs from clipboard
+    const clipboardItemsList = e.clipboardData.items
+    if (Array.isArray(clipboardItemsList) && clipboardItemsList.length > 0) {
+      for (const item of clipboardItemsList) {
+        try {
+          const url = item.getAsString()
+          if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+            const icon = getFavicon(url)
+            console.log('[WebCanvas] Pasted URL:', url)
+            await addLinkNode(projectId, url, undefined, icon)
+            return
+          }
+        } catch (err) {
+          // Silent fail for non-text data
+        }
+      }
+    }
+
+    console.log('[WebCanvas] No supported paste content detected')
+  }, [projectId])
+
   const getFavicon = (url: string) => {
     try {
       const domain = new URL(url).hostname
@@ -126,12 +172,13 @@ export default function DropZone({ projectId, children }: DropZoneProps) {
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
+      onPaste={handlePaste}
       className={`min-h-full transition-colors ${
         isDragOver ? 'bg-blue-50 ring-2 ring-inset ring-blue-300' : ''
       }`}
     >
       {children}
-      
+
       {/* Drop Indicator */}
       {isDragOver && (
         <div className="fixed bottom-4 left-4 right-4 py-3 bg-blue-600 text-white text-center text-sm font-medium rounded-lg shadow-lg">

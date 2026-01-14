@@ -14,7 +14,12 @@ export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
-    crx({ manifest }),
+    crx({ 
+      manifest,
+      // ✅ FIX: Disable auto-generated service worker loader
+      contentScripts: false,
+      serviceWorker: false,
+    }),
   ],
   server: {
     port: 5173,
