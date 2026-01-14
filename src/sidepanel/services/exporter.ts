@@ -38,9 +38,9 @@ interface ObsidianCanvas {
 // ========== Constants ==========
 
 const CARD_WIDTH = 400
-const CARD_HEIGHT_TEXT = 120
-const CARD_HEIGHT_IMAGE = 200
-const CARD_HEIGHT_LINK = 100
+const CARD_HEIGHT_TEXT = 200
+const CARD_HEIGHT_IMAGE = 300
+const CARD_HEIGHT_LINK = 150
 const GAP = 50
 const COLS = 4
 
@@ -55,6 +55,14 @@ function estimateHeight(node: CanvasNode): number {
 
 function mapTypeToObsidian(type: 'text' | 'file' | 'link'): 'text' | 'file' | 'link' {
   return type
+}
+
+function generateUUID(): string {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = Math.random() * 16 | 0
+    const v = c === 'x' ? r : (r & 0x3 | 0x8)
+    return v.toString(16)
+  })
 }
 
 // ========== Main Export Function ==========
@@ -75,11 +83,14 @@ export async function exportToCanvas(projectId: number, projectName: string): Pr
     const col = index % COLS
     const row = Math.floor(index / COLS)
 
+    const x = Math.round(col * (CARD_WIDTH + GAP))
+    const y = Math.round(row * (estimateHeight(node) + GAP))
+
     const obsidianNode: ObsidianNode = {
-      id: `node-${node.id}`,
+      id: generateUUID(),
       type: mapTypeToObsidian(node.type),
-      x: col * (CARD_WIDTH + GAP),
-      y: row * (estimateHeight(node) + GAP),
+      x: x,
+      y: y,
       width: CARD_WIDTH,
       height: estimateHeight(node),
     }
@@ -90,8 +101,9 @@ export async function exportToCanvas(projectId: number, projectName: string): Pr
     } else if (node.type === 'file') {
       obsidianNode.file = `attachments/${node.fileName || 'image.png'}`
     } else if (node.type === 'link') {
+      // Link nodes should ONLY have 'url' field according to JSON Canvas v1.0 spec
+      // Do NOT add 'text' field - it will cause Obsidian display issues
       obsidianNode.url = node.url || ''
-      obsidianNode.text = node.text || node.url || ''
     }
 
     return obsidianNode
