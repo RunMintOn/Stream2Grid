@@ -215,7 +215,7 @@ export default function TextCard({
             }}
           >
             {isShowingOriginal && (
-              <div className="absolute -top-1 right-0 pointer-events-none animate-in fade-in slide-in-from-right-2 duration-300">
+              <div className="absolute -top-1 right-7 pointer-events-none animate-in fade-in slide-in-from-right-2 duration-300">
                 <span className="text-[9px] font-bold tracking-wider text-blue-500/60 bg-blue-50 px-1.5 py-0.5 rounded uppercase border border-blue-100/50">
                   Original
                 </span>
