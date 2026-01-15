@@ -205,19 +205,24 @@ export default function TextCard({
         ) : (
           <div
             onDoubleClick={handleEnterEdit}
-            className={`text-sm text-slate-700 whitespace-pre-wrap break-words leading-relaxed transition-colors ${
+            className={`text-sm whitespace-pre-wrap break-words leading-relaxed transition-all duration-300 rounded-md -mx-1 px-1 ${
               !expanded && isLongText ? 'line-clamp-4' : ''
-            } ${expanded || !isLongText ? 'hover:bg-slate-50 cursor-text' : ''}`}
+            } ${expanded || !isLongText ? 'hover:bg-slate-50 cursor-text' : ''} ${
+              isShowingOriginal ? 'text-slate-500 bg-slate-50/50 italic' : 'text-slate-700'
+            }`}
             style={{
               lineHeight: '1.625', // 强制对齐
               fontSize: '0.875rem' // 强制对齐
             }}
           >
-            {isShowingOriginal ? (
-              <span className="text-slate-500 italic">原文：{originalText}</span>
-            ) : (
-              <span>{text}</span>
+            {isShowingOriginal && (
+              <div className="absolute -top-1 right-0 pointer-events-none animate-in fade-in slide-in-from-right-2 duration-300">
+                <span className="text-[9px] font-bold tracking-wider text-blue-500/60 bg-blue-50 px-1.5 py-0.5 rounded uppercase border border-blue-100/50">
+                  Original
+                </span>
+              </div>
             )}
+            {isShowingOriginal ? originalText : text}
           </div>
         )}
       </div>
