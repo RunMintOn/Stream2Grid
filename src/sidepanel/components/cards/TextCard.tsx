@@ -148,19 +148,13 @@ export default function TextCard({
             `} />
           </button>
           
-          {/* Sliding Label - Positioned absolutely relative to the icon to prevent shifting */}
+          {/* Sliding Label - Only shows ORIGINAL when viewing original version */}
           <div className={`
             absolute left-full top-1/2 -translate-y-1/2 ml-1.5 overflow-hidden transition-all duration-500 ease-out flex items-center
-            ${hasEdited ? 'max-w-24 opacity-100' : 'max-w-0 opacity-0'}
+            ${isShowingOriginal ? 'max-w-24 opacity-100' : 'max-w-0 opacity-0'}
           `}>
-            <span className={`
-              text-[9px] font-bold tracking-wider px-1.5 py-0.5 rounded shadow-sm border animate-in slide-in-from-left-2 duration-500
-              ${isShowingOriginal 
-                ? 'bg-blue-50 text-blue-500 border-blue-100' 
-                : 'bg-slate-100 text-slate-500 border-slate-200'
-              }
-            `}>
-              {isShowingOriginal ? 'ORIGINAL' : 'EDITED'}
+            <span className="text-[9px] font-bold tracking-wider px-1.5 py-0.5 rounded shadow-sm border animate-in slide-in-from-left-2 duration-500 bg-blue-50 text-blue-500 border-blue-100">
+              ORIGINAL
             </span>
           </div>
         </div>
