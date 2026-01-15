@@ -20,6 +20,8 @@ export default function TextCard({
   const [isEditing, setIsEditing] = useState(false)
   const [editText, setEditText] = useState(text)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const isSavingRef = useRef(false)
+  const lastSaveTimeRef = useRef(0)
 
   const lines = text.split('\n')
   const isLongText = lines.length > 4 || text.length > 300
@@ -31,14 +33,8 @@ export default function TextCard({
     }
   }, [text, isEditing])
 
-  // Auto-resize textarea
-  useEffect(() => {
-    if (isEditing && textareaRef.current) {
-      textareaRef.current.style.height = '0px' // Reset height to get correct scrollHeight
-      const scrollHeight = textareaRef.current.scrollHeight
-      textareaRef.current.style.height = `${scrollHeight}px`
-    }
-  }, [editText, isEditing])
+  // Auto-resize textarea is now handled by CSS grid technique
+  // Removed the useEffect that caused layout jumps
 
   // Focus textarea when entering edit mode
   useEffect(() => {
@@ -48,13 +44,41 @@ export default function TextCard({
     }
   }, [isEditing])
 
+  const handleEnterEdit = useCallback(() => {
+    // 防止保存瞬间的布局抖动触发双击重新进入
+    if (Date.now() - lastSaveTimeRef.current < 300) return
+    setIsEditing(true)
+  }, [])
+
   const handleSave = useCallback(async () => {
+    if (isSavingRef.current) return
+    
     const trimmed = editText.trim()
-    if (trimmed !== text) {
-      await db.nodes.update(id, { text: trimmed })
+    if (trimmed === text) {
+      setIsEditing(false)
+      return
     }
-    setIsEditing(false)
+
+    try {
+      isSavingRef.current = true
+      await db.nodes.update(id, { text: trimmed })
+      lastSaveTimeRef.current = Date.now()
+      setIsEditing(false)
+    } catch (err) {
+      console.error('[WebCanvas] Save failed:', err)
+    } finally {
+      isSavingRef.current = false
+    }
   }, [id, editText, text])
+
+  const handleBlur = useCallback((e: React.FocusEvent) => {
+    // 如果相关联的焦点目标是“完成”按钮，则忽略 blur
+    // 因为按钮的 onClick 会处理保存逻辑，避免重复触发
+    if (e.relatedTarget && (e.relatedTarget as HTMLElement).closest('[data-action="save-text"]')) {
+      return
+    }
+    handleSave()
+  }, [handleSave])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && e.shiftKey) {
@@ -92,28 +116,43 @@ export default function TextCard({
       {/* Content */}
       <div className="relative">
         {isEditing ? (
-          <textarea
-            ref={textareaRef}
-            value={editText}
-            onChange={(e) => setEditText(e.target.value)}
-            onKeyDown={handleKeyDown}
-            onBlur={handleSave}
-            spellCheck={false}
-            className="w-full text-sm font-sans text-slate-700 bg-transparent border-none focus:ring-0 p-0 resize-none overflow-hidden block shadow-none outline-none"
-            style={{ 
-              boxShadow: 'none', 
-              outline: 'none',
-              minHeight: '1em',
-              lineHeight: '1.625', // 对应 Tailwind 的 leading-relaxed (1.625)
-              fontSize: '0.875rem', // 对应 text-sm (14px)
-              padding: '0',
-              margin: '0',
-              border: 'none'
-            }}
-          />
+          <div className="grid">
+            {/* Ghost element for auto-sizing */}
+            <div
+              className="invisible whitespace-pre-wrap break-words text-sm font-sans leading-relaxed pointer-events-none"
+              style={{ 
+                gridArea: '1 / 1 / 2 / 2',
+                padding: '0',
+                margin: '0',
+                minHeight: '1.625em'
+              }}
+            >
+              {editText + (editText.endsWith('\n') ? ' ' : '')}
+            </div>
+            <textarea
+              ref={textareaRef}
+              value={editText}
+              onChange={(e) => setEditText(e.target.value)}
+              onKeyDown={handleKeyDown}
+              onBlur={handleBlur}
+              spellCheck={false}
+              className="w-full text-sm font-sans text-slate-700 bg-transparent border-none focus:ring-0 p-0 resize-none overflow-hidden block shadow-none outline-none"
+              style={{ 
+                gridArea: '1 / 1 / 2 / 2',
+                boxShadow: 'none', 
+                outline: 'none',
+                minHeight: '1.625em',
+                lineHeight: '1.625',
+                fontSize: '0.875rem',
+                padding: '0',
+                margin: '0',
+                border: 'none'
+              }}
+            />
+          </div>
         ) : (
           <div
-            onDoubleClick={() => (!isLongText || expanded) && setIsEditing(true)}
+            onDoubleClick={handleEnterEdit}
             className={`text-sm text-slate-700 whitespace-pre-wrap break-words leading-relaxed transition-colors ${
               !expanded && isLongText ? 'line-clamp-4' : ''
             } ${expanded || !isLongText ? 'hover:bg-slate-50 cursor-text' : ''}`}
@@ -151,16 +190,25 @@ export default function TextCard({
                   </div>
                 </div>
               )}
-              <button
-                onClick={() => isEditing ? handleSave() : setIsEditing(true)}
-                className={`text-xs px-2 py-1 rounded transition-colors ${
-                  isEditing 
-                    ? 'bg-blue-600 text-white hover:bg-blue-700' 
-                    : 'text-slate-400 hover:text-blue-600 hover:bg-blue-50'
-                }`}
-              >
-                {isEditing ? '完成' : '编辑'}
-              </button>
+              {isEditing ? (
+                <button
+                  key="save-btn"
+                  data-action="save-text"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={handleSave}
+                  className="text-xs px-2 py-1 rounded bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                >
+                  完成
+                </button>
+              ) : (
+                <button
+                  key="edit-btn"
+                  onClick={handleEnterEdit}
+                  className="text-xs px-2 py-1 rounded text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                >
+                  编辑
+                </button>
+              )}
             </>
           )}
         </div>
