@@ -30,23 +30,35 @@ export default function TextCard({
   
   // Fetch node data to get hasEdited status
   useEffect(() => {
-    console.log('[TextCard DEBUG] Card ID:', id, 'Props text:', text, 'Props originalText:', originalText)
+    console.log('[TextCard DEBUG] Fetching node data...', {
+      id,
+      text,
+      originalText,
+      hasEdited
+    })
     
     db.nodes.get(id).then((nodeData) => {
       if (nodeData) {
-        console.log('[TextCard DEBUG] DB data:', {
+        console.log('[TextCard DEBUG] DB data fetched:', {
           id: nodeData.id,
           hasEdited: nodeData.hasEdited,
           text: nodeData.text,
           originalText: nodeData.originalText,
           editedText: nodeData.editedText,
         })
-        setHasEdited(!!nodeData.hasEdited)
+        
+        // Only update state if hasEdited changed
+        if (nodeData.hasEdited !== hasEdited) {
+          console.log('[TextCard DEBUG] Updating hasEdited state from', hasEdited, 'to', nodeData.hasEdited)
+          setHasEdited(!!nodeData.hasEdited)
+        } else {
+          console.log('[TextCard DEBUG] hasEdits unchanged, skipping state update')
+        }
       } else {
         console.error('[TextCard DEBUG] Node not found:', id)
       }
     })
-  }, [id])
+  }, [id, text, hasEdited]) // Add text and hasEdited to dependencies
 
   const lines = text.split('\n')
   const isLongText = lines.length > 4 || text.length > 300

@@ -165,4 +165,9 @@ export async function updateTextNode(nodeId: number, newContent: string) {
     })
     console.log('[updateTextNode DEBUG] Updated edited version only')
   }
+  
+  // Fetch and return the updated node
+  const updatedNode = await db.nodes.get(nodeId)
+  console.log('[updateTextNode DEBUG] Returning updated node:', updatedNode)
+  return updatedNode
 }
