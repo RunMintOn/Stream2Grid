@@ -47,8 +47,8 @@ export default function StickyHeader({
         </h1>
       </div>
 
-      {/* Right: Actions - Fixed width container, ensures buttons never wrap */}
-      <div className="flex-none flex items-center justify-end gap-1.5">
+      {/* Right: Actions - Fixed width container to match left side for perfect centering */}
+      <div className="flex-none w-[72px] flex items-center justify-end gap-1.5">
         {showExport && (
           <>
             <div className="relative group/help flex-none">
