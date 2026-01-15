@@ -34,8 +34,9 @@ export default function TextCard({
   // Auto-resize textarea
   useEffect(() => {
     if (isEditing && textareaRef.current) {
-      textareaRef.current.style.height = 'auto'
-      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`
+      textareaRef.current.style.height = '0px' // Reset height to get correct scrollHeight
+      const scrollHeight = textareaRef.current.scrollHeight
+      textareaRef.current.style.height = `${scrollHeight}px`
     }
   }, [editText, isEditing])
 
@@ -43,7 +44,6 @@ export default function TextCard({
   useEffect(() => {
     if (isEditing && textareaRef.current) {
       textareaRef.current.focus()
-      // Put cursor at the end
       textareaRef.current.setSelectionRange(editText.length, editText.length)
     }
   }, [isEditing])
@@ -51,15 +51,7 @@ export default function TextCard({
   const handleSave = useCallback(async () => {
     const trimmed = editText.trim()
     if (trimmed !== text) {
-      if (trimmed === '') {
-        // If empty, we could delete it, but for now let's just save as empty or keep previous
-        // The requirements say "Handle empty text gracefully"
-        // Let's keep it if user wants empty, or maybe delete? 
-        // Usually, users don't want empty cards.
-        await db.nodes.update(id, { text: trimmed })
-      } else {
-        await db.nodes.update(id, { text: trimmed })
-      }
+      await db.nodes.update(id, { text: trimmed })
     }
     setIsEditing(false)
   }, [id, editText, text])
@@ -106,7 +98,18 @@ export default function TextCard({
             onChange={(e) => setEditText(e.target.value)}
             onKeyDown={handleKeyDown}
             onBlur={handleSave}
-            className="w-full text-sm font-sans text-slate-700 bg-transparent border-none focus:ring-0 p-0 resize-none overflow-hidden leading-relaxed block"
+            spellCheck={false}
+            className="w-full text-sm font-sans text-slate-700 bg-transparent border-none focus:ring-0 p-0 resize-none overflow-hidden block shadow-none outline-none"
+            style={{ 
+              boxShadow: 'none', 
+              outline: 'none',
+              minHeight: '1em',
+              lineHeight: '1.625', // 对应 Tailwind 的 leading-relaxed (1.625)
+              fontSize: '0.875rem', // 对应 text-sm (14px)
+              padding: '0',
+              margin: '0',
+              border: 'none'
+            }}
           />
         ) : (
           <div
@@ -114,6 +117,10 @@ export default function TextCard({
             className={`text-sm text-slate-700 whitespace-pre-wrap break-words leading-relaxed transition-colors ${
               !expanded && isLongText ? 'line-clamp-4' : ''
             } ${expanded || !isLongText ? 'hover:bg-slate-50 cursor-text' : ''}`}
+            style={{
+              lineHeight: '1.625', // 强制对齐
+              fontSize: '0.875rem' // 强制对齐
+            }}
           >
             {text}
           </div>
@@ -140,7 +147,6 @@ export default function TextCard({
                 <div className="absolute bottom-full right-0 mb-2 hidden group-hover/tooltip:block z-20">
                   <div className="bg-slate-800 text-white text-[10px] py-1 px-2 rounded shadow-lg whitespace-nowrap animate-in fade-in zoom-in duration-200">
                     双击也可以进入编辑
-                    {/* Tooltip Arrow */}
                     <div className="absolute top-full right-3 -mt-1 border-4 border-transparent border-t-slate-800"></div>
                   </div>
                 </div>
