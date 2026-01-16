@@ -27,6 +27,7 @@ export default function TextCard({
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const isSavingRef = useRef(false)
   const lastSaveTimeRef = useRef(0)
+  const cursorOffsetRef = useRef<number | null>(null)
   
   // Fetch node data to get hasEdited status
   useEffect(() => {
@@ -53,20 +54,45 @@ export default function TextCard({
   // Focus textarea when entering edit mode
   useEffect(() => {
     if (isEditing && textareaRef.current) {
-      textareaRef.current.focus()
-      textareaRef.current.setSelectionRange(editText.length, editText.length)
+      textareaRef.current.focus({ preventScroll: true })
+      
+      const len = editText.length
+      // 如果是通过双击进入，尝试根据点击位置定位光标
+      // 否则（如通过按钮）默认定位到末尾
+      const pos = cursorOffsetRef.current !== null ? cursorOffsetRef.current : len
+      textareaRef.current.setSelectionRange(pos, pos)
+      
+      // 重置，确保下次如果是按钮进入，默认还是末尾
+      cursorOffsetRef.current = null
     }
   }, [isEditing])
 
-  const handleEnterEdit = useCallback(() => {
+  const handleEnterEdit = useCallback((e?: React.MouseEvent) => {
     // 防止保存瞬间的布局抖动触发双击重新进入
     if (Date.now() - lastSaveTimeRef.current < 300) return
+    
+    // 获取精确的光标位置
+    if (e && e.type === 'dblclick') {
+      const range = document.caretRangeFromPoint(e.clientX, e.clientY)
+      if (range && range.startContainer) {
+        // 如果点击的是文本节点，直接取 offset
+        if (range.startContainer.nodeType === Node.TEXT_NODE) {
+          cursorOffsetRef.current = range.startOffset
+        } else {
+          // 如果点击的是容器（比如行尾或空白处），尝试找到最近的文本位置
+          cursorOffsetRef.current = editText.length
+        }
+      }
+    } else {
+      cursorOffsetRef.current = null
+    }
+
     // 如果在查看原文，先切换回编辑版
     if (isShowingOriginal) {
       setIsShowingOriginal(false)
     }
     setIsEditing(true)
-  }, [isShowingOriginal])
+  }, [isShowingOriginal, editText.length])
   
   const handleSave = useCallback(async () => {
     if (isSavingRef.current) return
@@ -178,11 +204,11 @@ export default function TextCard({
           <div className="grid w-full max-w-full">
             {/* Ghost element for auto-sizing */}
             <div
-              className="invisible whitespace-pre-wrap break-all text-sm font-sans leading-relaxed pointer-events-none"
+              className="invisible whitespace-pre-wrap break-all text-sm font-sans leading-relaxed pointer-events-none -mx-1 px-1"
               style={{ 
                 gridArea: '1 / 1 / 2 / 2',
-                padding: '0',
-                margin: '0',
+                margin: '0 -0.25rem', // Match -mx-1
+                padding: '0 0.25rem', // Match px-1
                 minHeight: '1.625em'
               }}
             >
@@ -195,7 +221,7 @@ export default function TextCard({
               onKeyDown={handleKeyDown}
               onBlur={handleBlur}
               spellCheck={false}
-              className="w-full text-sm font-sans text-slate-700 bg-transparent border-none focus:ring-0 p-0 resize-none overflow-hidden block shadow-none outline-none break-all"
+              className="w-full text-sm font-sans text-slate-700 bg-transparent border-none focus:ring-0 resize-none overflow-hidden block shadow-none outline-none break-all"
               style={{ 
                 gridArea: '1 / 1 / 2 / 2',
                 boxShadow: 'none', 
@@ -203,8 +229,8 @@ export default function TextCard({
                 minHeight: '1.625em',
                 lineHeight: '1.625',
                 fontSize: '0.875rem',
-                padding: '0',
-                margin: '0',
+                margin: '0 -0.25rem', // Match -mx-1
+                padding: '0 0.25rem', // Match px-1
                 border: 'none'
               }}
             />
