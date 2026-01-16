@@ -161,7 +161,7 @@ export default function TextCard({
   return (
     <div 
       className={`bg-white rounded-lg shadow-sm border p-4 group relative transition-all duration-300 ${
-        isEditing ? 'border-blue-400 animate-pulse-blue ring-1 ring-blue-100' : 'border-slate-200'
+        isEditing ? 'border-blue-400 animate-pulse-blue' : 'border-slate-200 hover:border-blue-200'
       }`}
     >
       {/* Version Toggle Icon & Sliding Label - Top Left Corner Vertex */}
