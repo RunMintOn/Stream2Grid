@@ -3,7 +3,7 @@ import type { Project } from './services/db'
 import ProjectList from './components/layout/ProjectList'
 import CardStream from './components/layout/CardStream'
 import StickyHeader from './components/layout/StickyHeader'
-import { db } from './services/db'
+import { db, ensureInboxExists } from './services/db'
 import { exportToCanvas } from './services/exporter'
 import DropZone from './components/common/DropZone'
 
@@ -17,12 +17,8 @@ export default function App() {
   useEffect(() => {
     const fetchInboxId = async () => {
       try {
-        // 动态导入 ensureInboxExists 避免循环依赖问题
-        const dbModule = await import('./services/db')
-        await dbModule.ensureInboxExists()
+        await ensureInboxExists()
         
-        // 重新获取 db 实例以确保 schema 已更新
-        const { db } = dbModule
         const inbox = await db.projects.where('isInbox').equals(1).first()
         if (inbox && inbox.id) {
           setInboxId(inbox.id)

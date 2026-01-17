@@ -69,10 +69,26 @@ document.addEventListener('dragstart', (event) => {
       
       // 额外的保险：将 payload 发送给 Background Script 缓存
       // 这解决了部分网站（如 GitHub）可能存在的 dataTransfer 限制或跨域丢失问题
-      chrome.runtime.sendMessage({
-        action: 'setDragPayload',
-        payload: payload
-      }).catch(() => { /* 忽略扩展未连接错误 */ })
+      try {
+        // 防御性检查：确保扩展上下文仍然有效
+        if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
+          chrome.runtime.sendMessage({
+            action: 'setDragPayload',
+            payload: payload
+          }).catch((err) => {
+            // 忽略 "Extension context invalidated" 错误
+            const msg = err?.message || '';
+            if (msg.includes('Extension context invalidated')) {
+              console.log('[WebCanvas] Extension context invalidated (reload page to fix)')
+            }
+          })
+        } else {
+          console.log('[WebCanvas] Extension context invalid, skipping background message')
+        }
+      } catch (e) {
+         // 捕获所有可能的错误（包括访问 chrome.runtime 抛出的错误）
+         console.warn('[WebCanvas] Runtime message failed:', e)
+      }
 
       console.log('[WebCanvas] Drag detected:', payload.type, payload.sourceTitle)
     } catch (e) {
