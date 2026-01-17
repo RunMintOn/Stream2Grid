@@ -228,14 +228,23 @@ export default function DropZone({ projectId, children }: DropZoneProps) {
     <div
       onDragOver={(e) => {
         e.preventDefault()
-        setIsDragging(true)
+        // 使用计数器或状态来避免子元素触发 dragLeave 导致的闪烁
+        // 这里简化处理：只要是 dragOver，就认为是拖拽中
+        if (!isDragging) setIsDragging(true)
       }}
-      onDragLeave={() => setIsDragging(false)}
+      onDragLeave={(e) => {
+        // 只有当鼠标真正离开当前容器时（relatedTarget 不在容器内），才取消拖拽状态
+        const currentTarget = e.currentTarget
+        const relatedTarget = e.relatedTarget as Node
+        if (currentTarget.contains(relatedTarget)) return
+        
+        setIsDragging(false)
+      }}
       onDrop={handleDrop}
-      className={`min-h-full transition-all duration-200 relative ${
+      className={`min-h-full transition-all duration-200 relative border-4 ${
         isDragging 
-          ? 'bg-blue-50/30 animate-pulse-fast-blue' 
-          : ''
+          ? 'border-blue-600 bg-blue-50/30 animate-pulse-fast-blue' 
+          : 'border-transparent'
       }`}
     >
       {/* Full Screen Overlay when Dragging */}
