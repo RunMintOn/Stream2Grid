@@ -13,6 +13,11 @@ export default function App() {
   const [isExporting, setIsExporting] = useState(false)
   const [showToast, setShowToast] = useState(false)
 
+  // Debug: Log when project changes
+  useEffect(() => {
+    console.log('[WebCanvas App] currentProject changed to:', currentProject?.id, 'name:', currentProject?.name)
+  }, [currentProject])
+
   // 使用 useLiveQuery 响应式查询 Inbox
   const inbox = useLiveQuery(() =>
     db.projects.filter(p => p.isInbox === true).first()

@@ -48,7 +48,13 @@ class WebCanvasDB extends Dexie {
 
 export const db = new WebCanvasDB()
 
+// 暴露到全局用于调试（仅开发环境）
+if (typeof window !== 'undefined') {
+  (window as any).db = db
+}
+
 // ========== Initialization ==========
+
 
 // 确保 Inbox 存在
 export async function ensureInboxExists() {

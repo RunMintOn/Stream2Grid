@@ -21,6 +21,9 @@ export default function DropZone({ projectId, children, onSuccess, isInboxMode =
   const [isDragging, setIsDragging] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
 
+  // Debug: Log when projectId changes
+  console.log('[WebCanvas DropZone] Rendered with projectId:', projectId, 'isInboxMode:', isInboxMode)
+
   // Wrap db operations with onSuccess callback
   const handleSuccess = useCallback(() => {
     console.log('[WebCanvas] handleSuccess() called')

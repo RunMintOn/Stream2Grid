@@ -13,13 +13,25 @@ export default function ProjectList({ onSelectProject }: ProjectListProps) {
   const projects = useLiveQuery(async () => {
     // 获取所有项目
     const allProjects = await db.projects.orderBy('updatedAt').reverse().toArray()
-    
+
     // 分离 Inbox 和普通项目
     const inbox = allProjects.find(p => p.isInbox)
     const others = allProjects.filter(p => !p.isInbox)
-    
+
     // Inbox 置顶
     return inbox ? [inbox, ...others] : others
+  })
+
+  // 获取每个项目的节点数量
+  const nodeCounts = useLiveQuery(async () => {
+    const counts: Record<number, number> = {}
+    const nodes = await db.nodes.toArray()
+    nodes.forEach(node => {
+      if (node.projectId) {
+        counts[node.projectId] = (counts[node.projectId] || 0) + 1
+      }
+    })
+    return counts
   })
 
   const handleCreateProject = useCallback(async () => {
@@ -124,6 +136,17 @@ export default function ProjectList({ onSelectProject }: ProjectListProps) {
                       默认
                     </span>
                   )}
+                  {/* Node count badge */}
+                  <span className={`ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                    project.isInbox
+                      ? 'bg-green-200 text-green-800'
+                      : 'bg-slate-200 text-slate-700'
+                  }`}>
+                    {nodeCounts && nodeCounts[project.id!] !== undefined
+                      ? `${nodeCounts[project.id!]} 项`
+                      : '0 项'
+                    }
+                  </span>
                 </h3>
                 <p className={`text-xs ${
                   project.isInbox ? 'text-green-600/70' : 'text-slate-400'

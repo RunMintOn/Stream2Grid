@@ -3,7 +3,6 @@ import { db } from '../../services/db'
 import TextCard from '../cards/TextCard'
 import ImageCard from '../cards/ImageCard'
 import LinkCard from '../cards/LinkCard'
-import DropZone from '../common/DropZone'
 
 interface CardStreamProps {
   projectId: number
@@ -15,6 +14,9 @@ export default function CardStream({ projectId, onDelete }: CardStreamProps) {
     () => db.nodes.where('projectId').equals(projectId).sortBy('order'),
     [projectId]
   )
+
+  // Debug: Log when nodes change
+  console.log('[WebCanvas CardStream] projectId:', projectId, 'nodes:', nodes, 'nodes.length:', nodes?.length || 0)
 
   const handleDelete = async (nodeId: number) => {
     await onDelete(nodeId)
@@ -29,59 +31,57 @@ export default function CardStream({ projectId, onDelete }: CardStreamProps) {
   }
 
   return (
-    <DropZone projectId={projectId}>
-      <div className="px-5 py-4 min-h-full">
-        {nodes.length === 0 ? (
-          <div className="text-center text-slate-500 py-12">
-            <div className="text-4xl mb-4">📋</div>
-            <p className="mb-2">还没有内容</p>
-            <p className="text-sm">从网页拖拽文字、图片或链接到这里</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {nodes.map((node) => {
-              switch (node.type) {
+    <div className="px-5 py-4 min-h-full">
+      {nodes.length === 0 ? (
+        <div className="text-center text-slate-500 py-12">
+          <div className="text-4xl mb-4">📋</div>
+          <p className="mb-2">还没有内容</p>
+          <p className="text-sm">从网页拖拽文字、图片或链接到这里</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {nodes.map((node) => {
+            switch (node.type) {
                  case 'text':
+                    return (
+                        <TextCard
+                          key={node.id}
+                          id={node.id!}
+                          text={node.text || ''}
+                          originalText={node.originalText}
+                          sourceUrl={node.sourceUrl}
+                          sourceIcon={node.sourceIcon}
+                          onDelete={() => handleDelete(node.id!)}
+                        />
+                    )
+                 case 'file':
                    return (
-                     <TextCard
-                       key={node.id}
-                       id={node.id!}
-                       text={node.text || ''}
-                       originalText={node.originalText}
-                       sourceUrl={node.sourceUrl}
-                       sourceIcon={node.sourceIcon}
-                       onDelete={() => handleDelete(node.id!)}
-                     />
+                      <ImageCard
+                        key={node.id}
+                        id={node.id!}
+                        fileData={node.fileData}
+                        fileName={node.fileName || 'image.png'}
+                        sourceUrl={node.sourceUrl}
+                        onDelete={() => handleDelete(node.id!)}
+                      />
                    )
-                case 'file':
-                  return (
-                    <ImageCard
-                      key={node.id}
-                      id={node.id!}
-                      fileData={node.fileData}
-                      fileName={node.fileName || 'image.png'}
-                      sourceUrl={node.sourceUrl}
-                      onDelete={() => handleDelete(node.id!)}
-                    />
-                  )
-                case 'link':
-                  return (
-                    <LinkCard
-                      key={node.id}
-                      id={node.id!}
-                      url={node.url || ''}
-                      title={node.text}
-                      sourceIcon={node.sourceIcon}
-                      onDelete={() => handleDelete(node.id!)}
-                    />
-                  )
-                default:
-                  return null
-              }
-            })}
-          </div>
-        )}
-      </div>
-    </DropZone>
+                 case 'link':
+                   return (
+                      <LinkCard
+                        key={node.id}
+                        id={node.id!}
+                        url={node.url || ''}
+                        title={node.text}
+                        sourceIcon={node.sourceIcon}
+                        onDelete={() => handleDelete(node.id!)}
+                      />
+                   )
+                 default:
+                   return null
+               }
+          })}
+        </div>
+      )}
+    </div>
   )
 }
