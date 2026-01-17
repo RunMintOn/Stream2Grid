@@ -250,27 +250,18 @@ export default function DropZone({ projectId, children }: DropZoneProps) {
 
       {/* Full Screen Overlay Content */}
       {isDragging && (
-        <div className="absolute inset-0 z-[101] flex items-center justify-center pointer-events-none">
-          {/* Holographic/Neon center prompt card */}
-          <div className="relative p-6 rounded-2xl bg-slate-900/85 backdrop-blur-xl border border-blue-400/30 shadow-[0_0_40px_rgba(59,130,246,0.6)] flex flex-col items-center justify-center animate-in zoom-in-95 duration-200 overflow-hidden group">
-            
-            {/* Animated background sheen */}
-            <div className="absolute inset-0 bg-gradient-to-tr from-blue-500/10 via-transparent to-blue-500/10 animate-pulse"></div>
-            
-            {/* Icon with glowing ring */}
-            <div className="relative z-10 w-16 h-16 rounded-full border border-blue-400 bg-blue-500/20 flex items-center justify-center mb-4 shadow-[0_0_20px_rgba(59,130,246,0.4)] animate-bounce backdrop-blur-sm">
-              <svg className="w-8 h-8 text-blue-100 drop-shadow-[0_0_5px_rgba(255,255,255,0.8)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+        <div className="fixed inset-0 z-[101] flex flex-col justify-end items-center pb-8 pointer-events-none">
+          {/* Subtle bottom gradient to ensure text readability */}
+          <div className="fixed bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-blue-900/40 to-transparent pointer-events-none"></div>
+
+          {/* Minimalist Bottom Pill Prompt */}
+          <div className="relative z-10 flex items-center gap-3 px-6 py-3 bg-blue-600/90 backdrop-blur-md rounded-full shadow-[0_0_20px_rgba(37,99,235,0.5)] animate-in slide-in-from-bottom-4 duration-300 border border-blue-400/30">
+            <div className="w-5 h-5 rounded-full border-2 border-white/80 flex items-center justify-center animate-bounce">
+              <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
               </svg>
             </div>
-            
-            {/* Glowing Text */}
-            <p className="relative z-10 text-white font-bold text-xl tracking-widest drop-shadow-[0_0_10px_rgba(59,130,246,0.8)]">
-              释放添加
-            </p>
-            <p className="relative z-10 text-blue-200/90 text-xs mt-2 font-mono tracking-wider uppercase border-t border-blue-400/30 pt-2 px-4">
-              DROP CONTENT HERE
-            </p>
+            <span className="text-white font-medium tracking-wide text-sm drop-shadow-sm">释放以添加内容</span>
           </div>
         </div>
       )}
