@@ -142,7 +142,7 @@ function App() {
 
   if (!currentProject) {
     return (
-      <div className="relative h-screen bg-slate-50 flex flex-col">
+      <div className="relative bg-slate-50 flex flex-col">
         <StickyHeader title="我的画板" />
 
         {/* Toast */}
@@ -187,7 +187,7 @@ function App() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-slate-50">
+    <div className="flex flex-col bg-slate-50">
       <StickyHeader
         title={currentProject.name}
         showBack
