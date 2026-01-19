@@ -243,13 +243,14 @@ export default function TextCard({
           onKeyDown={handleKeyDown}
           onBlur={handleBlur}
           onPaste={handlePaste}
+          tabIndex={isEditing ? 0 : -1}
           className={`
             w-full max-w-full text-sm font-sans leading-relaxed whitespace-pre-wrap break-all 
             -mx-1 px-1 rounded-md transition-all duration-200 outline-none relative z-10
             ${!isEditing && !expanded && isLongText ? 'line-clamp-4' : ''}
             ${!isEditing && (expanded || !isLongText) ? 'hover:bg-slate-50 cursor-default' : ''}
             ${!isEditing && isShowingOriginal ? 'text-slate-500 bg-slate-50/50 italic' : 'text-slate-700'}
-            ${isEditing ? 'cursor-text' : ''}
+            ${isEditing ? 'cursor-text' : 'caret-transparent select-text'}
           `}
           style={{
             lineHeight: '1.625',

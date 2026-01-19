@@ -205,9 +205,14 @@ export default function DropZone({ projectId, children, onSuccess, isInboxMode =
   const handlePaste = useCallback(async (e: ClipboardEvent) => {
     console.log('[WebCanvas] PASTE EVENT TRIGGERED')
 
-    // 只有当不在输入框中粘贴时才处理
     const target = e.target as HTMLElement
-    if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return
+    if (
+      target.tagName === 'INPUT' || 
+      target.tagName === 'TEXTAREA' || 
+      target.isContentEditable
+    ) {
+      return
+    }
 
     // 图片粘贴
     if (e.clipboardData?.files.length) {
