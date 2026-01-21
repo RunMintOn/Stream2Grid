@@ -6,6 +6,7 @@ interface DropZoneProps {
   children: ReactNode
   onSuccess?: () => void
   isInboxMode?: boolean
+  projectType?: 'canvas' | 'markdown'
 }
 
 interface WebCanvasPayload {
@@ -17,12 +18,12 @@ interface WebCanvasPayload {
   linkTitle?: string
 }
 
-export default function DropZone({ projectId, children, onSuccess, isInboxMode = false }: DropZoneProps) {
+export default function DropZone({ projectId, children, onSuccess, isInboxMode = false, projectType = 'canvas' }: DropZoneProps) {
   const [isDragging, setIsDragging] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
 
   // Debug: Log when projectId changes
-  console.log('[WebCanvas DropZone] Rendered with projectId:', projectId, 'isInboxMode:', isInboxMode)
+  console.log('[WebCanvas DropZone] Rendered with projectId:', projectId, 'isInboxMode:', isInboxMode, 'projectType:', projectType)
 
   // Wrap db operations with onSuccess callback
   const handleSuccess = useCallback(() => {
@@ -46,6 +47,21 @@ export default function DropZone({ projectId, children, onSuccess, isInboxMode =
     try {
       const payload: WebCanvasPayload = JSON.parse(jsonString)
       console.log('[WebCanvas] Processing payload:', payload)
+
+      // If Markdown project, dispatch event instead of DB operations
+      if (projectType === 'markdown') {
+        console.log('[WebCanvas] Dispatching markdown insert event')
+        window.dispatchEvent(new CustomEvent('webcanvas-insert-markdown', {
+          detail: {
+            type: payload.type,
+            content: payload.content,
+            sourceUrl: payload.sourceUrl,
+            sourceTitle: payload.sourceTitle || payload.linkTitle
+          }
+        }))
+        handleSuccess()
+        return
+      }
 
       const sourceIcon = payload.sourceIcon || getFaviconUrl(payload.sourceUrl)
 
@@ -138,6 +154,23 @@ export default function DropZone({ projectId, children, onSuccess, isInboxMode =
     if (e.dataTransfer.files.length > 0) {
       console.log('[WebCanvas] Processing file drag...')
       const files = Array.from(e.dataTransfer.files)
+      
+      if (projectType === 'markdown') {
+        for (const file of files) {
+          if (file.type.startsWith('image/')) {
+            window.dispatchEvent(new CustomEvent('webcanvas-insert-markdown', {
+              detail: {
+                type: 'image',
+                content: file, // Blob
+                sourceUrl: ''
+              }
+            }))
+          }
+        }
+        handleSuccess()
+        return
+      }
+
       for (const file of files) {
         if (file.type.startsWith('image/')) {
           console.log('[WebCanvas] Adding image file:', file.name)
@@ -153,6 +186,45 @@ export default function DropZone({ projectId, children, onSuccess, isInboxMode =
     const url = e.dataTransfer.getData('text/uri-list')
     console.log('[WebCanvas] URL from text/uri-list:', url)
     if (url) {
+      if (projectType === 'markdown') {
+        // Check if image URL
+        if (url.match(/\.(jpeg|jpg|gif|png|webp)$/i)) {
+           // For markdown, we might want to download it or just insert as link?
+           // Plan says: "Dragging an image saves it to assets/".
+           // So we should download it.
+           // But download is async via background.
+           // We can reuse downloadAndSaveImage but modify it to return blob?
+           // Or just dispatch event with URL and let LocalMDView handle download?
+           // LocalMDView has file handle, so it can save.
+           // But CORS issues. Background script handles CORS.
+           // Let's use downloadAndSaveImage logic but redirect the result.
+           // Actually, downloadAndSaveImage sends message to background, which sends message back.
+           // We need to intercept that message.
+           // Or we can just dispatch event "download-image-for-markdown" and let LocalMDView handle it?
+           // No, DropZone handles background communication.
+           
+           // Let's dispatch event with URL and let LocalMDView handle it?
+           // No, LocalMDView cannot bypass CORS.
+           
+           // We'll use the existing background message flow.
+           // Background sends 'imageDownloaded' message.
+           // We need to listen for it and if projectType is markdown, dispatch event.
+           
+           await downloadAndSaveImage(url)
+           // The listener in useEffect will handle the response.
+        } else {
+           window.dispatchEvent(new CustomEvent('webcanvas-insert-markdown', {
+              detail: {
+                type: 'link',
+                content: url,
+                sourceUrl: url
+              }
+           }))
+           handleSuccess()
+        }
+        return
+      }
+
       // 这是一个图片链接吗？
       if (url.match(/\.(jpeg|jpg|gif|png|webp)$/i)) {
         console.log('[WebCanvas] Detected image URL, downloading...')
@@ -183,6 +255,17 @@ export default function DropZone({ projectId, children, onSuccess, isInboxMode =
     const text = e.dataTransfer.getData('text/plain')
     console.log('[WebCanvas] Text from text/plain:', text)
     if (text) {
+      if (projectType === 'markdown') {
+         window.dispatchEvent(new CustomEvent('webcanvas-insert-markdown', {
+            detail: {
+              type: 'text',
+              content: text
+            }
+         }))
+         handleSuccess()
+         return
+      }
+
       const urlMatch = text.match(/^https?:\/\/[^\s]+$/)
       if (urlMatch) {
         console.log('[WebCanvas] Text looks like URL, adding as link')
@@ -266,6 +349,19 @@ export default function DropZone({ projectId, children, onSuccess, isInboxMode =
         const res = await fetch(request.base64)
         const blob = await res.blob()
 
+        if (projectType === 'markdown') {
+           window.dispatchEvent(new CustomEvent('webcanvas-insert-markdown', {
+              detail: {
+                type: 'image',
+                content: blob,
+                fileName: request.fileName,
+                sourceUrl: request.sourceUrl
+              }
+           }))
+           handleSuccess()
+           return
+        }
+
         await addImageNode(projectId, blob, request.fileName, request.sourceUrl)
         console.log('[WebCanvas] Downloaded image saved successfully')
         handleSuccess()
@@ -274,7 +370,7 @@ export default function DropZone({ projectId, children, onSuccess, isInboxMode =
 
     chrome.runtime.onMessage.addListener(messageListener)
     return () => chrome.runtime.onMessage.removeListener(messageListener)
-  }, [projectId])
+  }, [projectId, projectType])
 
   return (
     <div
