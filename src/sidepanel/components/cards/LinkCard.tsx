@@ -26,7 +26,7 @@ export default function LinkCard({
       setCopied(true)
       setTimeout(() => setCopied(false), 1500)
     } catch (err) {
-      console.error('[WebCanvas] Failed to copy:', err)
+      console.error('[Cascade] Failed to copy:', err)
     }
   }
 

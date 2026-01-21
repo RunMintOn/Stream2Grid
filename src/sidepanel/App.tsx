@@ -20,7 +20,7 @@ function App() {
 
   // Debug: Log when project changes
   useEffect(() => {
-    console.log('[WebCanvas App] currentProject changed to:', currentProject?.id, 'name:', currentProject?.name)
+    console.log('[Cascade App] currentProject changed to:', currentProject?.id, 'name:', currentProject?.name)
   }, [currentProject])
 
   // 使用 useLiveQuery 响应式查询 Inbox
@@ -31,7 +31,7 @@ function App() {
   // 确保 Inbox 存在（初始化时）
   useEffect(() => {
     ensureInboxExists().catch(err => {
-      console.error('[WebCanvas] Failed to initialize Inbox:', err)
+      console.error('[Cascade] Failed to initialize Inbox:', err)
     })
   }, [])
 
@@ -39,7 +39,7 @@ function App() {
   const inboxId = inbox?.id || null
 
   useEffect(() => {
-    console.log('[WebCanvas] App component mounted')
+    console.log('[Cascade] App component mounted')
   }, [])
 
   // Handle Ctrl+Z (or Cmd+Z on Mac) for undo
@@ -71,7 +71,7 @@ function App() {
     if (!deletedNode) return
 
     try {
-      console.log('[WebCanvas] Performing undo:', deletedNode)
+      console.log('[Cascade] Performing undo:', deletedNode)
 
       // Remove 'id' field before restoring (it will be auto-generated)
       const { id, ...nodeToRestore } = deletedNode
@@ -82,9 +82,9 @@ function App() {
       // Hide undo toast
       hideUndo()
 
-      console.log('[WebCanvas] Undo successful')
+      console.log('[Cascade] Undo successful')
     } catch (err) {
-      console.error('[WebCanvas] Undo failed:', err)
+      console.error('[Cascade] Undo failed:', err)
       alert('撤回失败: ' + (err instanceof Error ? err.message : '未知错误'))
     }
   }, [deletedNode, hideUndo])
@@ -105,7 +105,7 @@ function App() {
     try {
       await exportToCanvas(currentProject.id, currentProject.name)
     } catch (error) {
-      console.error('[WebCanvas] Export failed:', error)
+      console.error('[Cascade] Export failed:', error)
       alert('导出失败，请检查控制台。')
     } finally {
       setIsExporting(false)
@@ -144,7 +144,7 @@ function App() {
   if (!currentProject) {
     return (
       <div className="relative h-full bg-slate-50 flex flex-col">
-        <StickyHeader title="我的画板" />
+        <StickyHeader title="Cascade" />
 
         {/* Toast */}
         <Toast />

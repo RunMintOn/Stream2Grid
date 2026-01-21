@@ -1,6 +1,6 @@
-// ========== WebCanvas Content Script - Drag Listener ==========
+// ========== Cascade Content Script - Drag Listener ==========
 
-console.log('[WebCanvas] Content script loaded on:', window.location.href)
+console.log('[Cascade] Content script loaded on:', window.location.href)
 
 /**
  * 提取当前页面的 Favicon
@@ -79,20 +79,20 @@ document.addEventListener('dragstart', (event) => {
             // 忽略 "Extension context invalidated" 错误
             const msg = err?.message || '';
             if (msg.includes('Extension context invalidated')) {
-              console.log('[WebCanvas] Extension context invalidated (reload page to fix)')
+              console.log('[Cascade] Extension context invalidated (reload page to fix)')
             }
           })
         } else {
-          console.log('[WebCanvas] Extension context invalid, skipping background message')
+          console.log('[Cascade] Extension context invalid, skipping background message')
         }
       } catch (e) {
          // 捕获所有可能的错误（包括访问 chrome.runtime 抛出的错误）
-         console.warn('[WebCanvas] Runtime message failed:', e)
+         console.warn('[Cascade] Runtime message failed:', e)
       }
 
-      console.log('[WebCanvas] Drag detected:', payload.type, payload.sourceTitle)
+      console.log('[Cascade] Drag detected:', payload.type, payload.sourceTitle)
     } catch (e) {
-      console.warn('[WebCanvas] Could not set custom drag data:', e)
+      console.warn('[Cascade] Could not set custom drag data:', e)
     }
   }
 }, true); // Use capture phase

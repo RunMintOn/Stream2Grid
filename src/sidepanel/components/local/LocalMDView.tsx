@@ -42,7 +42,7 @@ export default function LocalMDView({ fileHandle, project: _project }: LocalMDVi
       
       setLoading(false);
     } catch (err) {
-      console.error('[WebCanvas] Failed to load local markdown:', err);
+      console.error('[Cascade] Failed to load local markdown:', err);
       if (err instanceof Error && err.name === 'NotAllowedError') {
         setNeedsPermission(true);
       } else {
@@ -71,7 +71,7 @@ export default function LocalMDView({ fileHandle, project: _project }: LocalMDVi
 
        setIsSaving(false);
      } catch (err) {
-       console.error('[WebCanvas] Failed to save local markdown:', err);
+       console.error('[Cascade] Failed to save local markdown:', err);
        // Optional: Show error toast or indicator
        setIsSaving(false);
      }

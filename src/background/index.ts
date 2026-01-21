@@ -1,4 +1,4 @@
-// ========== WebCanvas Background Service Worker ==========
+// ========== Cascade Background Service Worker ==========
 // ========== Image Download Handler ==========
 // Fixed: Proper base64 conversion using Promise wrapper
 
@@ -8,7 +8,7 @@ async function handleImageDownload(
   sourceUrl?: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    console.log('[WebCanvas] Downloading image:', imageUrl)
+    console.log('[Cascade] Downloading image:', imageUrl)
     
     const response = await fetch(imageUrl, {
       mode: 'cors',
@@ -17,7 +17,7 @@ async function handleImageDownload(
 
     if (!response.ok) {
       const error = `HTTP error: ${response.status}`
-      console.error('[WebCanvas] Image download failed:', error)
+      console.error('[Cascade] Image download failed:', error)
       return { success: false, error }
     }
 
@@ -26,7 +26,7 @@ async function handleImageDownload(
     const ext = contentType.split('/')[1]?.split(';')[0] || 'png'
     const fileName = `image-${Date.now()}.${ext}`
 
-    console.log('[WebCanvas] Image downloaded, converting to base64:', fileName, blob.size, 'bytes')
+    console.log('[Cascade] Image downloaded, converting to base64:', fileName, blob.size, 'bytes')
     
     // ✅ FIX: Properly convert blob to base64 with correct Promise handling
     const base64 = await new Promise<string>((resolve, reject) => {
@@ -50,9 +50,9 @@ async function handleImageDownload(
     })
 
     if (base64) {
-      console.log('[WebCanvas] Base64 conversion successful, length:', base64.length)
+      console.log('[Cascade] Base64 conversion successful, length:', base64.length)
     } else {
-      console.error('[WebCanvas] Base64 conversion failed: result is undefined')
+      console.error('[Cascade] Base64 conversion failed: result is undefined')
       return { success: false, error: 'Base64 conversion failed' }
     }
 
@@ -69,14 +69,14 @@ async function handleImageDownload(
 
     return { success: true }
   } catch (error) {
-    console.error('[WebCanvas] Image download error:', error)
+    console.error('[Cascade] Image download error:', error)
     return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
   }
 }
 
 // ========== Message Handlers ==========
 
-console.log('[WebCanvas] Background service worker started')
+console.log('[Cascade] Background service worker started')
 
 let lastDragPayload: any = null
 
@@ -97,7 +97,7 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
     handleImageDownload(request.url, request.projectId, request.sourceUrl)
       .then(sendResponse)
       .catch((error) => {
-        console.error('[WebCanvas] Image download failed:', error)
+        console.error('[Cascade] Image download failed:', error)
         sendResponse({ success: false, error: error.message })
       })
     return true // Async response
@@ -135,5 +135,5 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
 // ========== Extension Installation Handler ==========
 
 chrome.runtime.onInstalled.addListener((details) => {
-  console.log('[WebCanvas] Extension installed:', details.reason)
+  console.log('[Cascade] Extension installed:', details.reason)
 })

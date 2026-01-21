@@ -141,7 +141,7 @@ export default function ProjectList({ onSelectProject }: ProjectListProps) {
         fileHandle: fileHandle as any
       })
     } catch (e) {
-      console.error('[WebCanvas] Failed to create project:', e)
+      console.error('[Cascade] Failed to create project:', e)
       alert('创建失败: ' + (e as Error).message)
     }
   }, [newProjectName, createType, onSelectProject])

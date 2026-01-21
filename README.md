@@ -1,6 +1,6 @@
-# Stream2Grid (Obsidian Scout)
+# Cascade (old name Stream2Grid (Obsidian Scout))
 
-Stream2Grid 是一个轻量级的浏览器侧边栏扩展，它为你提供了一个强大的“信息缓冲区”。无论你是 Obsidian 用户，还是需要临时收集资料的研究者，都可以在浏览网页时，通过简单的“拖拽”操作，快速收集文本、图片和链接。对于 Obsidian 用户，更提供了一键导出为 Obsidian Canvas (.canvas) 格式的专属支持。
+Cascade 是一个轻量级的浏览器侧边栏扩展，它为你提供了一个强大的“信息缓冲区”。无论你是 Obsidian 用户，还是需要临时收集资料的研究者，都可以在浏览网页时，通过简单的“拖拽”操作，快速收集文本、图片和链接。对于 Obsidian 用户，更提供了一键导出为 Obsidian Canvas (.canvas) 格式的专属支持。
 
 ## 🚀 核心特性
 
@@ -39,7 +39,7 @@ npm run dev
 4. 选择本项目中的 `dist` 目录。
 
 ### 5. 使用说明
-1. 点击浏览器右上角的扩展图标，将 **Stream2Grid** 固定。
+1. 点击浏览器右上角的扩展图标，将 **Cascade** 固定。
 2. 点击图标打开 **Side Panel**（侧边栏）。
 3. **开始采集**：直接将网页上的文字、图片拖入侧边栏，或者使用右键菜单（如果已实现）。
 4. **导出**：点击顶部的 `Export` 按钮，会下载一个包含 `.canvas` 文件和图片的压缩包。

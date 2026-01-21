@@ -31,7 +31,7 @@ export default function VaultAuth() {
         setIsAuthorized(false)
       }
     } catch (err) {
-      console.error('[WebCanvas] Failed to check vault status:', err)
+      console.error('[Cascade] Failed to check vault status:', err)
     } finally {
       setLoading(false)
     }
@@ -62,7 +62,7 @@ export default function VaultAuth() {
       setIsAuthorized(true)
     } catch (err) {
       if ((err as Error).name !== 'AbortError') {
-        console.error('[WebCanvas] Authorization failed:', err)
+        console.error('[Cascade] Authorization failed:', err)
         alert('授权失败: ' + (err as Error).message)
       }
     }
@@ -99,7 +99,7 @@ export default function VaultAuth() {
       ) : (
         <div className="space-y-3">
           <p className="text-xs text-slate-500 leading-relaxed">
-            授权一个本地文件夹（如 Obsidian Vault），WebCanvas 将直接在其中读写 Markdown 文件。
+            授权一个本地文件夹（如 Obsidian Vault），Cascade 将直接在其中读写 Markdown 文件。
           </p>
           <button
             onClick={handleAuthorize}

@@ -30,38 +30,83 @@ export interface CanvasNode {
 
 // ========== Database Definition ==========
 
-class WebCanvasDB extends Dexie {
+class CascadeDB extends Dexie {
   projects!: EntityTable<Project, 'id'>
   nodes!: EntityTable<CanvasNode, 'id'>
 
   constructor() {
-    super('WebCanvasDB')
+    super('CascadeDB')
     
-    // Version 2: Added isInbox to projects
-    this.version(2).stores({
-      projects: '++id, name, updatedAt, isInbox',
+    // 基础表结构定义
+    const schema = {
+      projects: '++id, name, updatedAt, isInbox, projectType',
       nodes: '++id, projectId, type, order, createdAt',
-    })
+    }
 
-    // Version 3: Added projectType for Local MD support
-    this.version(3).stores({
-      projects: '++id, name, updatedAt, isInbox, projectType', // fileHandle NOT indexed
-      nodes: '++id, projectId, type, order, createdAt',
-    }).upgrade(tx => {
+    // 版本定义
+    this.version(1).stores(schema)
+    this.version(2).stores(schema)
+    this.version(3).stores(schema).upgrade(tx => {
       return tx.table('projects').toCollection().modify(project => {
-        // Default existing projects to 'canvas' type
         if (!project.projectType) {
           project.projectType = 'canvas'
         }
       })
     })
 
-    // Keep version 1 for backward compatibility documentation (optional)
-    // this.version(1).stores({ ... })
+    // 数据迁移逻辑：如果存在旧的 WebCanvasDB，则迁移数据
+    this.on('ready', async () => {
+      try {
+        const oldDbName = 'WebCanvasDB'
+        const exists = await Dexie.exists(oldDbName)
+        if (exists) {
+          console.log(`[CascadeDB] Found legacy database ${oldDbName}, starting migration...`)
+          const oldDb = new Dexie(oldDbName)
+          
+          // 打开旧数据库并根据之前的结构定义表
+          await oldDb.open()
+          
+          // 检查旧表是否存在
+          if (oldDb.tables.some(t => t.name === 'projects') && oldDb.tables.some(t => t.name === 'nodes')) {
+            // 迁移 Projects
+            const oldProjects = await oldDb.table('projects').toArray()
+            const currentProjectsCount = await this.projects.count()
+            
+            // 只有当新数据库为空（或只有初始 Inbox）时才迁移
+            if (oldProjects.length > 0 && currentProjectsCount <= 1) {
+              console.log(`[CascadeDB] Migrating ${oldProjects.length} projects...`)
+              for (const p of oldProjects) {
+                const { id: _oldId, ...projectData } = p
+                // 检查是否已存在同名项目或 Inbox
+                const existing = await this.projects.where('name').equals(p.name).first()
+                if (!existing) {
+                  const newProjectId = await this.projects.add(projectData)
+                  
+                  // 迁移该项目下的 Nodes
+                  const oldNodes = await oldDb.table('nodes').where('projectId').equals(p.id).toArray()
+                  if (oldNodes.length > 0) {
+                    console.log(`[CascadeDB] Migrating ${oldNodes.length} nodes for project: ${p.name}`)
+                    for (const n of oldNodes) {
+                      const { id: _oldNodeId, ...nodeData } = n
+                      nodeData.projectId = newProjectId as number // 关联新项目 ID
+                      await this.nodes.add(nodeData)
+                    }
+                  }
+                }
+              }
+              console.log('[CascadeDB] Migration completed successfully.')
+            }
+          }
+          await oldDb.close()
+        }
+      } catch (err) {
+        console.error('[CascadeDB] Migration failed:', err)
+      }
+    })
   }
 }
 
-export const db = new WebCanvasDB()
+export const db = new CascadeDB()
 
 export const VAULT_ROOT_NAME = '___VAULT_ROOT___'
 
@@ -77,7 +122,7 @@ if (typeof window !== 'undefined') {
 export async function ensureInboxExists() {
   const inbox = await db.projects.filter(p => p.isInbox === true).first()
   if (!inbox) {
-    console.log('[WebCanvasDB] Creating Inbox project...')
+    console.log('[CascadeDB] Creating Inbox project...')
     await db.projects.add({
       name: '收集箱',
       updatedAt: Date.now(),
@@ -90,10 +135,10 @@ export async function ensureInboxExists() {
 
 export async function addTextNode(projectId: number, text: string, sourceUrl?: string, sourceIcon?: string) {
   try {
-    console.log('[WebCanvasDB] addTextNode called - projectId:', projectId, 'text length:', text.length)
+    console.log('[CascadeDB] addTextNode called - projectId:', projectId, 'text length:', text.length)
 
     const maxOrder = await db.nodes.where('projectId').equals(projectId).count()
-    console.log('[WebCanvasDB] maxOrder for new node:', maxOrder)
+    console.log('[CascadeDB] maxOrder for new node:', maxOrder)
 
     const result = await db.nodes.add({
       projectId,
@@ -108,10 +153,10 @@ export async function addTextNode(projectId: number, text: string, sourceUrl?: s
       createdAt: Date.now(),
     })
 
-    console.log('[WebCanvasDB] Text node added successfully, ID:', result)
+    console.log('[CascadeDB] Text node added successfully, ID:', result)
     return result
   } catch (err) {
-    console.error('[WebCanvasDB] Failed to add text node:', err)
+    console.error('[CascadeDB] Failed to add text node:', err)
     throw err
   }
 }
@@ -123,10 +168,10 @@ export async function addImageNode(
   sourceUrl?: string
 ) {
   try {
-    console.log('[WebCanvasDB] addImageNode called - projectId:', projectId, 'fileName:', fileName)
+    console.log('[CascadeDB] addImageNode called - projectId:', projectId, 'fileName:', fileName)
 
     const maxOrder = await db.nodes.where('projectId').equals(projectId).count()
-    console.log('[WebCanvasDB] maxOrder for new node:', maxOrder)
+    console.log('[CascadeDB] maxOrder for new node:', maxOrder)
 
     const result = await db.nodes.add({
       projectId,
@@ -138,10 +183,10 @@ export async function addImageNode(
       createdAt: Date.now(),
     })
 
-    console.log('[WebCanvasDB] Image node added successfully, ID:', result)
+    console.log('[CascadeDB] Image node added successfully, ID:', result)
     return result
   } catch (err) {
-    console.error('[WebCanvasDB] Failed to add image node:', err)
+    console.error('[CascadeDB] Failed to add image node:', err)
     throw err
   }
 }
@@ -153,10 +198,10 @@ export async function addLinkNode(
   sourceIcon?: string
 ) {
   try {
-    console.log('[WebCanvasDB] addLinkNode called - projectId:', projectId, 'url:', url)
+    console.log('[CascadeDB] addLinkNode called - projectId:', projectId, 'url:', url)
 
     const maxOrder = await db.nodes.where('projectId').equals(projectId).count()
-    console.log('[WebCanvasDB] maxOrder for new node:', maxOrder)
+    console.log('[CascadeDB] maxOrder for new node:', maxOrder)
 
     const result = await db.nodes.add({
       projectId,
@@ -168,29 +213,29 @@ export async function addLinkNode(
       createdAt: Date.now(),
     })
 
-    console.log('[WebCanvasDB] Link node added successfully, ID:', result)
+    console.log('[CascadeDB] Link node added successfully, ID:', result)
     return result
   } catch (err) {
-    console.error('[WebCanvasDB] Failed to add link node:', err)
+    console.error('[CascadeDB] Failed to add link node:', err)
     throw err
   }
 }
 
 export async function updateNodeOrder(nodeId: number, newOrder: number) {
   try {
-    console.log('[WebCanvasDB] updateNodeOrder - nodeId:', nodeId, 'newOrder:', newOrder)
+    console.log('[CascadeDB] updateNodeOrder - nodeId:', nodeId, 'newOrder:', newOrder)
     const result = await db.nodes.update(nodeId, { order: newOrder })
-    console.log('[WebCanvasDB] Node order updated successfully')
+    console.log('[CascadeDB] Node order updated successfully')
     return result
   } catch (err) {
-    console.error('[WebCanvasDB] Failed to update node order:', err)
+    console.error('[CascadeDB] Failed to update node order:', err)
     throw err
   }
 }
 
 export async function reorderNodes(_projectId: number, orderedIds: number[]) {
   try {
-    console.log('[WebCanvasDB] reorderNodes - orderedIds:', orderedIds)
+    console.log('[CascadeDB] reorderNodes - orderedIds:', orderedIds)
     await db.transaction('rw', db.nodes, async () => {
       await Promise.all(
         orderedIds.map((id, index) =>
@@ -198,9 +243,9 @@ export async function reorderNodes(_projectId: number, orderedIds: number[]) {
         )
       )
     })
-    console.log('[WebCanvasDB] Nodes reordered successfully')
+    console.log('[CascadeDB] Nodes reordered successfully')
   } catch (err) {
-    console.error('[WebCanvasDB] Failed to reorder nodes:', err)
+    console.error('[CascadeDB] Failed to reorder nodes:', err)
     throw err
   }
 }
@@ -214,7 +259,7 @@ export async function reorderNodes(_projectId: number, orderedIds: number[]) {
  */
 export async function updateTextNode(nodeId: number, newContent: string) {
   try {
-    console.log('[WebCanvasDB] updateTextNode - nodeId:', nodeId, 'content length:', newContent.length)
+    console.log('[CascadeDB] updateTextNode - nodeId:', nodeId, 'content length:', newContent.length)
 
     const node = await db.nodes.get(nodeId)
     if (!node) {
@@ -225,13 +270,13 @@ export async function updateTextNode(nodeId: number, newContent: string) {
 
     // If content hasn't changed, do nothing
     if (node.editedText && trimmed === node.editedText) {
-      console.log('[WebCanvasDB] Content unchanged, skipping update')
+      console.log('[CascadeDB] Content unchanged, skipping update')
       return
     }
 
     // Version detection
     if (!node.hasEdited) {
-      console.log('[WebCanvasDB] First edit detected')
+      console.log('[CascadeDB] First edit detected')
       // First edit: save original and create edited version
       await db.nodes.update(nodeId, {
         originalText: node.text,
@@ -240,7 +285,7 @@ export async function updateTextNode(nodeId: number, newContent: string) {
         hasEdited: true
       })
     } else {
-      console.log('[WebCanvasDB] Subsequent edit detected')
+      console.log('[CascadeDB] Subsequent edit detected')
       // Subsequent edit: only update edited version
       await db.nodes.update(nodeId, {
         editedText: trimmed,
@@ -250,10 +295,10 @@ export async function updateTextNode(nodeId: number, newContent: string) {
 
     // Return the updated node
     const updatedNode = await db.nodes.get(nodeId)
-    console.log('[WebCanvasDB] Text node updated successfully')
+    console.log('[CascadeDB] Text node updated successfully')
     return updatedNode
   } catch (err) {
-    console.error('[WebCanvasDB] Failed to update text node:', err)
+    console.error('[CascadeDB] Failed to update text node:', err)
     throw err
   }
 }
@@ -266,7 +311,7 @@ export async function updateTextNode(nodeId: number, newContent: string) {
  */
 export async function restoreNode(node: Omit<CanvasNode, 'id'>): Promise<number> {
   try {
-    console.log('[WebCanvasDB] restoreNode - type:', node.type, 'projectId:', node.projectId)
+    console.log('[CascadeDB] restoreNode - type:', node.type, 'projectId:', node.projectId)
 
     // Add node back to database
     const result = await db.nodes.add(node)
@@ -275,10 +320,10 @@ export async function restoreNode(node: Omit<CanvasNode, 'id'>): Promise<number>
       throw new Error('Failed to restore node: returned ID is undefined')
     }
 
-    console.log('[WebCanvasDB] Node restored successfully, ID:', result)
+    console.log('[CascadeDB] Node restored successfully, ID:', result)
     return result
   } catch (err) {
-    console.error('[WebCanvasDB] Failed to restore node:', err)
+    console.error('[CascadeDB] Failed to restore node:', err)
     throw err
   }
 }

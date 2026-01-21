@@ -15,7 +15,7 @@ export async function requestDirectoryHandle(): Promise<FileSystemDirectoryHandl
     });
     return handle;
   } catch (error) {
-    console.error('[WebCanvas FS] Failed to request directory handle:', error);
+    console.error('[Cascade FS] Failed to request directory handle:', error);
     throw error;
   }
 }
@@ -55,7 +55,7 @@ export async function readFile(
     const file = await fileHandle.getFile();
     return await file.text();
   } catch (error) {
-    console.error(`[WebCanvas FS] Failed to read file ${filename}:`, error);
+    console.error(`[Cascade FS] Failed to read file ${filename}:`, error);
     throw error;
   }
 }
@@ -75,7 +75,7 @@ export async function writeFile(
     await writable.write(content);
     await writable.close();
   } catch (error) {
-    console.error(`[WebCanvas FS] Failed to write file ${filename}:`, error);
+    console.error(`[Cascade FS] Failed to write file ${filename}:`, error);
     throw error;
   }
 }
@@ -112,7 +112,7 @@ export async function saveImage(
 
     return `assets/${filename}`;
   } catch (error) {
-    console.error(`[WebCanvas FS] Failed to save image ${filename}:`, error);
+    console.error(`[Cascade FS] Failed to save image ${filename}:`, error);
     throw error;
   }
 }

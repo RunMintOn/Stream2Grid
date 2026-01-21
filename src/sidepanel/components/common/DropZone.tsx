@@ -9,7 +9,7 @@ interface DropZoneProps {
   projectType?: 'canvas' | 'markdown'
 }
 
-interface WebCanvasPayload {
+interface CascadePayload {
   sourceUrl: string
   sourceTitle: string
   sourceIcon?: string
@@ -23,11 +23,11 @@ export default function DropZone({ projectId, children, onSuccess, isInboxMode =
   const [isProcessing, setIsProcessing] = useState(false)
 
   // Debug: Log when projectId changes
-  console.log('[WebCanvas DropZone] Rendered with projectId:', projectId, 'isInboxMode:', isInboxMode, 'projectType:', projectType)
+  console.log('[Cascade DropZone] Rendered with projectId:', projectId, 'isInboxMode:', isInboxMode, 'projectType:', projectType)
 
   // Wrap db operations with onSuccess callback
   const handleSuccess = useCallback(() => {
-    console.log('[WebCanvas] handleSuccess() called')
+    console.log('[Cascade] handleSuccess() called')
     if (onSuccess) onSuccess()
   }, [onSuccess])
 
@@ -43,14 +43,14 @@ export default function DropZone({ projectId, children, onSuccess, isInboxMode =
   }
 
   // 处理内容脚本传来的自定义数据
-  const handleWebCanvasPayload = async (jsonString: string) => {
+  const handleCascadePayload = async (jsonString: string) => {
     try {
-      const payload: WebCanvasPayload = JSON.parse(jsonString)
-      console.log('[WebCanvas] Processing payload:', payload)
+      const payload: CascadePayload = JSON.parse(jsonString)
+      console.log('[Cascade] Processing payload:', payload)
 
       // If Markdown project, dispatch event instead of DB operations
       if (projectType === 'markdown') {
-        console.log('[WebCanvas] Dispatching markdown insert event')
+        console.log('[Cascade] Dispatching markdown insert event')
         window.dispatchEvent(new CustomEvent('webcanvas-insert-markdown', {
           detail: {
             type: payload.type,
@@ -66,27 +66,27 @@ export default function DropZone({ projectId, children, onSuccess, isInboxMode =
       const sourceIcon = payload.sourceIcon || getFaviconUrl(payload.sourceUrl)
 
       if (payload.type === 'text' && payload.content) {
-        console.log('[WebCanvas] Adding text node')
+        console.log('[Cascade] Adding text node')
         await addTextNode(projectId, payload.content, payload.sourceUrl, sourceIcon)
-        console.log('[WebCanvas] Text node added successfully')
+        console.log('[Cascade] Text node added successfully')
       } else if (payload.type === 'link' && payload.content) {
         // 对于链接，我们优先展示目标页面的图标
         const targetIcon = getFaviconUrl(payload.content)
-        console.log('[WebCanvas] Adding link node')
+        console.log('[Cascade] Adding link node')
         await addLinkNode(
           projectId,
           payload.content,
           payload.linkTitle || payload.sourceTitle || payload.content,
           targetIcon
         )
-        console.log('[WebCanvas] Link node added successfully')
+        console.log('[Cascade] Link node added successfully')
       } else if (payload.type === 'image' && payload.content) {
-        console.log('[WebCanvas] Downloading and saving image')
+        console.log('[Cascade] Downloading and saving image')
         await downloadAndSaveImage(payload.content, payload.sourceUrl)
       }
       handleSuccess()
     } catch (e) {
-      console.error('[WebCanvas] Failed to parse payload:', e)
+      console.error('[Cascade] Failed to parse payload:', e)
     }
   }
 
@@ -102,57 +102,57 @@ export default function DropZone({ projectId, children, onSuccess, isInboxMode =
       })
 
       if (!response.success) {
-        console.error('[WebCanvas] Image download failed:', response.error)
+        console.error('[Cascade] Image download failed:', response.error)
         alert('图片下载失败: ' + response.error)
       } else {
         // Image download success
-        console.log('[WebCanvas] Image download initiated')
+        console.log('[Cascade] Image download initiated')
       }
     } catch (e) {
-      console.error('[WebCanvas] Download error:', e)
+      console.error('[Cascade] Download error:', e)
     } finally {
       setIsProcessing(false)
     }
   }
 
   const handleDrop = useCallback(async (e: React.DragEvent) => {
-    console.log('[WebCanvas] ========== DROP EVENT TRIGGERED ==========')
-    console.log('[WebCanvas] projectId:', projectId)
+    console.log('[Cascade] ========== DROP EVENT TRIGGERED ==========')
+    console.log('[Cascade] projectId:', projectId)
 
     e.preventDefault()
     e.stopPropagation()
     setIsDragging(false)
 
-    // 1. 优先检查自定义 WebCanvas 数据
+    // 1. 优先检查自定义 Cascade 数据
     let customData = e.dataTransfer.getData('application/webcanvas-payload')
-    console.log('[WebCanvas] customData from dataTransfer:', customData)
+    console.log('[Cascade] customData from dataTransfer:', customData)
 
     // 如果 dataTransfer 中没有数据（可能是跨域限制或网站拦截），尝试从 Background 获取缓存的 payload
     if (!customData) {
-      console.log('[WebCanvas] No customData, trying background cache...')
+      console.log('[Cascade] No customData, trying background cache...')
       try {
         const response = await chrome.runtime.sendMessage({ action: 'getDragPayload' })
-        console.log('[WebCanvas] Background response:', response)
+        console.log('[Cascade] Background response:', response)
         if (response?.success && response.payload) {
-          console.log('[WebCanvas] Recovered payload from background:', response.payload)
-          await handleWebCanvasPayload(JSON.stringify(response.payload))
+          console.log('[Cascade] Recovered payload from background:', response.payload)
+          await handleCascadePayload(JSON.stringify(response.payload))
           return
         }
       } catch (err) {
-        console.warn('[WebCanvas] Failed to get payload from background:', err)
+        console.warn('[Cascade] Failed to get payload from background:', err)
       }
     }
 
     if (customData) {
-      console.log('[WebCanvas] Using customData from dataTransfer')
-      await handleWebCanvasPayload(customData)
+      console.log('[Cascade] Using customData from dataTransfer')
+      await handleCascadePayload(customData)
       return
     }
 
     // 2. 检查文件拖拽
-    console.log('[WebCanvas] Files in dataTransfer:', e.dataTransfer.files.length)
+    console.log('[Cascade] Files in dataTransfer:', e.dataTransfer.files.length)
     if (e.dataTransfer.files.length > 0) {
-      console.log('[WebCanvas] Processing file drag...')
+      console.log('[Cascade] Processing file drag...')
       const files = Array.from(e.dataTransfer.files)
       
       if (projectType === 'markdown') {
@@ -173,9 +173,9 @@ export default function DropZone({ projectId, children, onSuccess, isInboxMode =
 
       for (const file of files) {
         if (file.type.startsWith('image/')) {
-          console.log('[WebCanvas] Adding image file:', file.name)
+          console.log('[Cascade] Adding image file:', file.name)
           await addImageNode(projectId, file, file.name)
-          console.log('[WebCanvas] Image file added successfully')
+          console.log('[Cascade] Image file added successfully')
         }
       }
       handleSuccess()
@@ -184,7 +184,7 @@ export default function DropZone({ projectId, children, onSuccess, isInboxMode =
 
     // 3. 检查 URL 拖拽
     const url = e.dataTransfer.getData('text/uri-list')
-    console.log('[WebCanvas] URL from text/uri-list:', url)
+    console.log('[Cascade] URL from text/uri-list:', url)
     if (url) {
       if (projectType === 'markdown') {
         // Check if image URL
@@ -227,23 +227,23 @@ export default function DropZone({ projectId, children, onSuccess, isInboxMode =
 
       // 这是一个图片链接吗？
       if (url.match(/\.(jpeg|jpg|gif|png|webp)$/i)) {
-        console.log('[WebCanvas] Detected image URL, downloading...')
+        console.log('[Cascade] Detected image URL, downloading...')
         await downloadAndSaveImage(url)
         // Image download is async and handled separately, but we can trigger success for UI
         handleSuccess()
       } else {
         // 普通链接
-        console.log('[WebCanvas] Adding link from URL')
+        console.log('[Cascade] Adding link from URL')
         try {
           const targetIcon = getFaviconUrl(url)
-          console.log('[WebCanvas] Calling addLinkNode')
+          console.log('[Cascade] Calling addLinkNode')
           await addLinkNode(projectId, url, url, targetIcon)
-          console.log('[WebCanvas] Link added successfully')
+          console.log('[Cascade] Link added successfully')
           handleSuccess()
         } catch (err) {
-          console.error('[WebCanvas] Failed to add link:', err)
+          console.error('[Cascade] Failed to add link:', err)
           // 不是有效 URL，当做文本处理
-          console.log('[WebCanvas] Falling back to text')
+          console.log('[Cascade] Falling back to text')
           await addTextNode(projectId, url)
           handleSuccess()
         }
@@ -253,7 +253,7 @@ export default function DropZone({ projectId, children, onSuccess, isInboxMode =
 
     // 4. 纯文本
     const text = e.dataTransfer.getData('text/plain')
-    console.log('[WebCanvas] Text from text/plain:', text)
+    console.log('[Cascade] Text from text/plain:', text)
     if (text) {
       if (projectType === 'markdown') {
          window.dispatchEvent(new CustomEvent('webcanvas-insert-markdown', {
@@ -268,25 +268,25 @@ export default function DropZone({ projectId, children, onSuccess, isInboxMode =
 
       const urlMatch = text.match(/^https?:\/\/[^\s]+$/)
       if (urlMatch) {
-        console.log('[WebCanvas] Text looks like URL, adding as link')
+        console.log('[Cascade] Text looks like URL, adding as link')
         const targetIcon = getFaviconUrl(text)
         await addLinkNode(projectId, text, text, targetIcon)
-        console.log('[WebCanvas] Link from text added successfully')
+        console.log('[Cascade] Link from text added successfully')
       } else {
         // 如果是从网页拖拽的纯文本，虽然没有 payload，但我们可以尝试获取来源 URL 的 Favicon
         // 注意：这里的 context 比较受限，所以 payload 才是最稳的
-        console.log('[WebCanvas] Adding as plain text')
+        console.log('[Cascade] Adding as plain text')
         await addTextNode(projectId, text)
-        console.log('[WebCanvas] Plain text added successfully')
+        console.log('[Cascade] Plain text added successfully')
       }
       handleSuccess()
     } else {
-      console.log('[WebCanvas] No text data found!')
+      console.log('[Cascade] No text data found!')
     }
   }, [projectId])
 
   const handlePaste = useCallback(async (e: ClipboardEvent) => {
-    console.log('[WebCanvas] PASTE EVENT TRIGGERED')
+    console.log('[Cascade] PASTE EVENT TRIGGERED')
 
     const target = e.target as HTMLElement
     if (
@@ -300,12 +300,12 @@ export default function DropZone({ projectId, children, onSuccess, isInboxMode =
     // 图片粘贴
     if (e.clipboardData?.files.length) {
       e.preventDefault()
-      console.log('[WebCanvas] Processing image paste...')
+      console.log('[Cascade] Processing image paste...')
       const files = Array.from(e.clipboardData.files)
       for (const file of files) {
         if (file.type.startsWith('image/')) {
           await addImageNode(projectId, file, file.name)
-          console.log('[WebCanvas] Image pasted successfully')
+          console.log('[Cascade] Image pasted successfully')
         }
       }
       handleSuccess()
@@ -314,20 +314,20 @@ export default function DropZone({ projectId, children, onSuccess, isInboxMode =
 
     // 文本粘贴
     const text = e.clipboardData?.getData('text')
-    console.log('[WebCanvas] Text from clipboard:', text)
+    console.log('[Cascade] Text from clipboard:', text)
     if (text) {
       e.preventDefault() // 阻止默认粘贴，防止粘贴到不可见区域
 
       // 简单判断是链接还是文本
       if (text.match(/^https?:\/\/[^\s]+$/)) {
-        console.log('[WebCanvas] Pasting as link')
+        console.log('[Cascade] Pasting as link')
         const targetIcon = getFaviconUrl(text)
         await addLinkNode(projectId, text, text, targetIcon)
-        console.log('[WebCanvas] Link pasted successfully')
+        console.log('[Cascade] Link pasted successfully')
       } else {
-        console.log('[WebCanvas] Pasting as plain text')
+        console.log('[Cascade] Pasting as plain text')
         await addTextNode(projectId, text)
-        console.log('[WebCanvas] Text pasted successfully')
+        console.log('[Cascade] Text pasted successfully')
       }
       handleSuccess()
     }
@@ -343,7 +343,7 @@ export default function DropZone({ projectId, children, onSuccess, isInboxMode =
   useEffect(() => {
     const messageListener = async (request: any) => {
       if (request.action === 'imageDownloaded' && request.projectId === projectId) {
-        console.log('[WebCanvas] Received downloaded image:', request.fileName)
+        console.log('[Cascade] Received downloaded image:', request.fileName)
 
         // base64 -> Blob
         const res = await fetch(request.base64)
@@ -363,7 +363,7 @@ export default function DropZone({ projectId, children, onSuccess, isInboxMode =
         }
 
         await addImageNode(projectId, blob, request.fileName, request.sourceUrl)
-        console.log('[WebCanvas] Downloaded image saved successfully')
+        console.log('[Cascade] Downloaded image saved successfully')
         handleSuccess()
       }
     }

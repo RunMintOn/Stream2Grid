@@ -18,13 +18,13 @@ export default function CardStream({ projectId, onDelete }: CardStreamProps) {
   const { setDeletedNode, showUndo } = useUndo()
 
   // Debug: Log when nodes change
-  console.log('[WebCanvas CardStream] projectId:', projectId, 'nodes:', nodes, 'nodes.length:', nodes?.length || 0)
+  console.log('[Cascade CardStream] projectId:', projectId, 'nodes:', nodes, 'nodes.length:', nodes?.length || 0)
 
   const handleDelete = async (nodeId: number) => {
     // Get the complete node data before deleting
     const node = await db.nodes.get(nodeId)
     if (!node) {
-      console.error('[WebCanvas CardStream] Node not found:', nodeId)
+      console.error('[Cascade CardStream] Node not found:', nodeId)
       return
     }
 

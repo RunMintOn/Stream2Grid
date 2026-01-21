@@ -3,7 +3,7 @@ import pkg from './package.json'
 
 export default defineManifest({
   manifest_version: 3,
-  name: 'Stream2Grid',
+  name: 'Cascade',
   version: pkg.version,
   description: 'Collect web content and export to Obsidian Canvas',
   icons: {
@@ -14,7 +14,7 @@ export default defineManifest({
     default_icon: {
       48: 'public/icon-48.png',
     },
-    default_title: 'Open Stream2Grid',
+    default_title: 'Open Cascade',
   },
   permissions: [
     'sidePanel',

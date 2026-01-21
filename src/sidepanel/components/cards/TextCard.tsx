@@ -117,7 +117,7 @@ export default function TextCard({
       lastSaveTimeRef.current = Date.now()
       setIsEditing(false)
     } catch (err) {
-      console.error('[WebCanvas] Save failed:', err)     // 恢复原始内容
+      console.error('[Cascade] Save failed:', err)     // 恢复原始内容
       if (contentRef.current) contentRef.current.innerText = text
     } finally {
       isSavingRef.current = false
@@ -166,7 +166,7 @@ export default function TextCard({
       setShowCopySuccess(true)
       setTimeout(() => setShowCopySuccess(false), 1500)
     } catch (err) {
-      console.error('[WebCanvas] Copy failed:', err)
+      console.error('[Cascade] Copy failed:', err)
     }
   }, [text])
 

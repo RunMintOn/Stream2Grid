@@ -28,7 +28,7 @@ export default function ImageCard({
         setCopied(true)
         setTimeout(() => setCopied(false), 1500)
       } catch (err) {
-        console.error('[WebCanvas] Copy failed:', err)
+        console.error('[Cascade] Copy failed:', err)
       }
     }
   }
