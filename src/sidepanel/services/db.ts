@@ -7,6 +7,8 @@ export interface Project {
   name: string
   updatedAt: number
   isInbox?: boolean // 标记是否为收集箱
+  projectType?: 'canvas' | 'markdown'
+  fileHandle?: FileSystemDirectoryHandle
 }
 
 export interface CanvasNode {
@@ -39,6 +41,19 @@ class WebCanvasDB extends Dexie {
     this.version(2).stores({
       projects: '++id, name, updatedAt, isInbox',
       nodes: '++id, projectId, type, order, createdAt',
+    })
+
+    // Version 3: Added projectType for Local MD support
+    this.version(3).stores({
+      projects: '++id, name, updatedAt, isInbox, projectType', // fileHandle NOT indexed
+      nodes: '++id, projectId, type, order, createdAt',
+    }).upgrade(tx => {
+      return tx.table('projects').toCollection().modify(project => {
+        // Default existing projects to 'canvas' type
+        if (!project.projectType) {
+          project.projectType = 'canvas'
+        }
+      })
     })
 
     // Keep version 1 for backward compatibility documentation (optional)
