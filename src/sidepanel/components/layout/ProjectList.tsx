@@ -68,10 +68,58 @@ export default function ProjectList({ onSelectProject }: ProjectListProps) {
         // Note: We assume permission is granted or will be prompted. 
         // In a real app we might need verifyPermission here.
         
-        const filename = `${newProjectName.trim()}.md`
+        let finalName = newProjectName.trim()
+        let filename = `${finalName}.md`
+        
+        // Check for naming collision
+        try {
+          // Try to get file without creating to check existence
+          await rootHandle.getFileHandle(filename)
+          // If successful, file exists. Find a unique name.
+          let i = 1
+          while (true) {
+            finalName = `${newProjectName.trim()} (${i})`
+            filename = `${finalName}.md`
+            try {
+              await rootHandle.getFileHandle(filename)
+              i++
+            } catch {
+              // Not found, safe to use
+              break
+            }
+          }
+        } catch {
+          // File doesn't exist, safe to use original name
+        }
+
         // Create file handle
         const file = await rootHandle.getFileHandle(filename, { create: true })
         fileHandle = file
+        
+        // Update project name to match filename (without extension) if it changed
+        if (finalName !== newProjectName.trim()) {
+          // We'll use the new name for the project too
+        }
+
+        const id = await db.projects.add({
+          name: finalName,
+          updatedAt: Date.now(),
+          projectType: createType,
+          fileHandle: fileHandle as any // Cast to avoid type issues if DB type is strict
+        })
+
+        setNewProjectName('')
+        setIsCreating(false)
+        setCreateType('canvas') // Reset
+
+        onSelectProject({
+          id: id as number,
+          name: finalName,
+          updatedAt: Date.now(),
+          projectType: createType,
+          fileHandle: fileHandle as any
+        })
+        return // Exit function
       }
 
       const id = await db.projects.add({
