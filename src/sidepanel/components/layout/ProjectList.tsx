@@ -128,7 +128,7 @@ export default function ProjectList({ onSelectProject }: ProjectListProps) {
             {!project.isInbox && (
               <button
                 onClick={(e) => handleDeleteProject(e, project.id!)}
-                className="absolute top-0 right-0 translate-x-1/3 -translate-y-1/3 w-7 h-7 flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-all duration-300 rounded-full bg-white shadow-md hover:shadow-lg ring-2 ring-white z-20"
+                className="absolute top-0 right-0 translate-x-1/4 -translate-y-1/4 w-8 h-8 flex items-center justify-center bg-[#e05f65] hover:bg-[#af3029] text-[#fffcf0] opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110 active:scale-95 z-30 rounded-full shadow-sm"
                 title="删除画板"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
