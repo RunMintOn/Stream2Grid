@@ -320,7 +320,7 @@ export default function TextCard({
       </div>
 
       {/* Actions Row */}
-      <div className="flex items-center justify-between mt-2 min-h-[24px] relative z-30">
+      <div className="flex items-center justify-between mt-2 min-h-[24px] relative z-50">
         <div>
           {isLongText && !isEditing && (
             <button
@@ -377,7 +377,7 @@ export default function TextCard({
 
       {/* Footer with source */}
       {sourceUrl && !isEditing && (
-        <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-end gap-1.5 text-xs text-slate-400 relative z-30">
+        <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-end gap-1.5 text-xs text-slate-400 relative z-50">
           {sourceIcon && !iconError && (
             <img
               src={sourceIcon}

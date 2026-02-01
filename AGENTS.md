@@ -1,169 +1,78 @@
-# WebCanvas - Agent Coding Guidelines
+# Cascade (WebCanvas) - Agent Coding Guidelines
 
-## Build Commands
+## Build & Test Commands
 
 ```bash
-npm run dev      # Development (Hot reload, outputs to dist/)
-npm run build    # Production build (tsc + vite build + fix-build.cjs)
-npm run lint     # ESLint check
-npm run preview  # Preview build
+npm run dev          # Start development server (HMR, outputs to dist/)
+npm run build        # Production build (tsc + vite build + fix-build.cjs)
+npm run lint         # Run ESLint (Currently requires flat config setup)
+npm run preview      # Preview the production build
 ```
 
-**No test suite**. Post-build: `fix-build.cjs` fixes asset paths (`../assets/` → `./assets/`) and manifest side_panel path.
-**ESLint**: Flat config required (not yet configured). Currently `npm run lint` will fail.
+**Testing**: Currently **No test suite** exists. If adding tests (Vitest recommended):
+- Run all tests: `npx vitest`
+- Run single test: `npx vitest src/path/to/file.test.ts`
+- Run by pattern: `npx vitest -t "component name"`
+
+**Post-build**: `fix-build.cjs` is CRITICAL. It fixes relative asset paths in `dist/` and updates `manifest.json` side_panel path.
 
 ## Tech Stack
+React 19 + TypeScript 5.9 + Vite 7 + CRXJS + Dexie (IndexedDB) + Tailwind CSS 4 + @dnd-kit
 
-React 19 + TypeScript 5.9 + Vite 7 + CRXJS + Dexie + Tailwind CSS 4 + @dnd-kit + JSZip
+## Code Style & Conventions
 
-**TypeScript**: Strict mode enabled. `@/*` path alias → `src/*`. Additional flags: `noUnusedLocals`, `noUnusedParameters`, `noFallthroughCasesInSwitch`. Prefer `unknown` over `any`. `@ts-ignore` only in exporter.ts for PromiseExtended.
-
-## Code Style
-
-- **Imports**: External → local → relative. Use `import type { }` for type-only imports
-- **UI**: Chinese text acceptable (`<button>创建</button>`)
-- **Logs**: Prefix with `[WebCanvas]` or `[WebCanvasDB]`
-- **Comments**: Chinese for business logic
-
-### File Organization
-```
-src/
-├── sidepanel/
-│   ├── components/     # React components (cards, common, layout)
-│   ├── contexts/      # React Context providers
-│   ├── services/      # Database, export, business logic
-│   └── App.tsx       # Main app component
-├── content/          # Content scripts injected into web pages
-└── background/       # Service worker
-```
+### TypeScript & Naming
+- **Strict Mode**: `strict: true` is mandatory. Avoid `any`, prefer `unknown`.
+- **Naming**: 
+  - Components: `PascalCase` (e.g., `TextCard.tsx`)
+  - Services/Utils: `camelCase` (e.g., `db.ts`)
+  - Hooks: `use*` (e.g., `useUndo.ts`)
+  - Interfaces: `PascalCase`, props often named `ComponentNameProps`.
+- **Imports**: External libraries -> Local services/utils -> Components -> Styles. Use `import type` for types.
 
 ### React Pattern
+- **Functional Components**: Only use functional components with hooks.
+- **Props**: Destructure in function signature. Use `interface` for props.
+- **State**: `useState` for UI state; `Context API` for cross-component state (e.g., Undo); `Dexie` for persistence.
+- **Hooks**: Use `useLiveQuery` for reactive DB data. Always cleanup in `useEffect` (e.g., `URL.revokeObjectURL`).
 
-```typescript
-interface Props { id: number; onDelete: () => void }
-export default function Component({ id, onDelete }: Props) {
-  const [state, setState] = useState(null)
-  const handleX = useCallback(() => { /* ... */ }, [dep])
+### Styling (Tailwind 4)
+- **Utilities Only**: Use `className`. No inline styles except for dynamic values.
+- **Custom Animations**: Defined in `index.css` (e.g., `animate-progress`, `animate-pulse-blue`).
+- **Theme**: Primary: `blue-600`, Background: `slate-50`, Inbox/Success: `green-500`.
 
-  useEffect(() => {
-    // Setup
-    return () => { /* Cleanup */ }
-  }, [dep])
+### Database (Dexie)
+- **Indexing**: NEVER index `Blob` fields (like `fileData`) as it crashes IndexedDB.
+- **Initialization**: `ensureInboxExists()` must be called on app mount.
+- **Transactions**: Use `db.transaction('rw', ...)` for multi-write operations.
 
-  return <div>{state}</div>
-}
-```
+### Error Handling & Logging
+- **Try-Catch**: Mandatory for all async operations and DB writes.
+- **User Feedback**: Use `alert('操作失败: ' + msg)` for user-facing errors (Chinese text).
+- **Logging**: Prefix logs with `[Cascade]` or `[CascadeDB]`.
 
-**Structure**: Functional only, `interface` Props, default exports, destructure props, `key` for lists.
-**Naming**: Components PascalCase, services camelCase, hooks `use*`, interfaces PascalCase (optionally `Props`).
+## Domain-Specific Patterns
 
-### contentEditable Pattern
+### Chrome Extension (V3)
+- **Content Scripts**: Use **Capture Phase** for drag events: `addEventListener('dragstart', handler, true)`.
+- **Service Worker**: Always `return true` in `chrome.runtime.onMessage` for async responses.
+- **Payload Fallback**: If `dataTransfer` fails (blocked by site), use background cache via `setDragPayload`.
 
-```typescript
-// Ignore blur if clicking save button
-onBlur={(e) => {
-  if (e.relatedTarget && (e.relatedTarget as HTMLElement).closest('[data-action="save"]')) return
-  handleSave()
-}}
-// Paste plain text only
-onPaste={(e) => { e.preventDefault(); const text = e.clipboardData.getData('text/plain'); ... }}
-```
+### UI UX Patterns
+- **Quadrant Grid**: Card actions (Restore, Copy, Delete) are often hidden in quadrants, revealed on hover.
+- **contentEditable**: 
+  - Use `innerText` for plain text.
+  - Check `e.relatedTarget` on `onBlur` to avoid race conditions with Save buttons.
+  - Handle `onPaste` to ensure plain text only.
+- **Language**: 
+  - **UI**: Chinese text is preferred for labels/messages.
+  - **Comments**: Chinese for business logic; English for technical notes.
 
-### Dexie Database
-
-```typescript
-interface CanvasNode {
-  id?: number; projectId: number; type: 'text' | 'file' | 'link'
-  order: number; fileData?: Blob  // ⚠️ NEVER index!
-  createdAt: number
-}
-class WebCanvasDB extends Dexie {
-  nodes!: EntityTable<CanvasNode, 'id'>
-  constructor() {
-    super('WebCanvasDB')
-    this.version(2).stores({
-      nodes: '++id, projectId, type, order, createdAt',  // No fileData!
-    })
-  }
-}
-```
-
-### State Management & Hooks
-- Local state: `useState`, Global: Context API (e.g., UndoContext)
-- Persistent storage: IndexedDB via Dexie (offline-only)
-- Reactive queries: `useLiveQuery` from dexie-react-hooks
-- Performance: `useCallback`/`useMemo`, cleanup `URL.revokeObjectURL()`, refs `contentRef.current`
-
-### Error Handling
-
-```typescript
-try {
-  await operation()
-} catch (err) {
-  console.error('[WebCanvas] Operation failed:', err)
-  alert('操作失败: ' + (err instanceof Error ? err.message : '未知错误'))
-}
-```
-
-Always use try-catch for async operations. Log with `[WebCanvas]` prefix. Show user-friendly Chinese alerts.
-
-### Service Worker
-
-```typescript
-chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
-  if (request.action === 'downloadImage') {
-    handleImageDownload(request.url, request.projectId)
-      .then(sendResponse)
-      .catch(e => sendResponse({ success: false, error: e.message }))
-    return true // Keep channel open for async
-  }
-})
-```
-
-### Tailwind CSS 4
-- Utilities only: `className="bg-white rounded-lg p-4"`. No inline CSS.
-- Custom animations in index.css: `animate-progress`, `animate-neon-breathe`, `animate-pulse-blue`
-- Palette: `slate-50` (bg), `blue-600` (primary), `green-500` (inbox)
-
-### Chrome Extension Patterns
-
-**Content Script**: Capture phase `addEventListener('dragstart', handler, true)`. Fallback via background cache. Graceful degradation on context invalidate.
-**Service Worker**: `return true` for async handlers. CORS fetch for cross-origin images. Cache drag payloads 5s.
-**Manifest (V3)**: Permissions: `sidePanel`, `storage`, `activeTab`. Host: `https://*/*`, `http://*/*`
-
-## Architecture
-
-**Stream-to-Grid**: Browser stores as 1D list (`order`), exports to 2D Obsidian grid via `(index % COLS, floor(index / COLS))`.
-**Database**: IndexedDB via Dexie. Never index Blob fields. Transactions for multi-writes. Offline-only.
-**Chrome Extension V3**: Side Panel + content scripts (drag detection) + service worker (cross-origin fetch). Load unpacked from `dist/`.
-**Inbox**: Default project with `isInbox: true`, created via `ensureInboxExists()`.
-**Drag-Drop**: Content script captures → injects `application/webcanvas-payload` → background caches → DropZone processes. Use capture phase!
-**Export**: Fetch → Transform → ZIP → Download. Normalize `\r\n` → `\n`. Revoke Object URLs. Link nodes: `url` field only.
+### Export Architecture (Stream-to-Grid)
+- Data is stored as a 1D list with an `order` field.
+- Exported to Obsidian Canvas as a 2D grid using `(index % COLS)` and `Math.floor(index / COLS)`.
 
 ## Common Pitfalls
-
-1. Never index Blobs in Dexie (crashes)
-2. Always revoke Object URLs
-3. Always return `true` for async service worker
-4. Type assertions: `const img = event.target as HTMLImageElement`
-5. Prefix logs with `[WebCanvas]`
-6. Inbox cannot be deleted (check `isInbox` flag)
-7. Avoid circular dependencies (use dynamic imports)
-
-## ⚠️ Critical Gotchas
-
-### UI Renders Empty (No Errors)
-**Cause**: Missing `@tailwindcss/vite` in vite.config.ts. **Fix**: Ensure `tailwindcss()` is first plugin:
-
-```typescript
-import tailwindcss from '@tailwindcss/vite'
-export default defineConfig({
-  plugins: [tailwindcss(), react(), crx({ manifest })],
-})
-```
-
-### Content Script DataTransfer Fails
-**Issue**: Some sites (GitHub) block custom dataTransfer. **Fallback**: Cache in background via `setDragPayload`, retrieve via `getDragPayload`. Expire after 5 seconds.
-
-### contentEditable Blur Race
-**Issue**: Clicking save button triggers blur → save. **Fix**: Check `e.relatedTarget` in blur handler (see pattern above).
+1. Circular dependencies between `db.ts` and components (use services as middleware).
+2. Forgetting to `revokeObjectURL` after image export.
+3. Not handling extension context invalidation (requires page reload).

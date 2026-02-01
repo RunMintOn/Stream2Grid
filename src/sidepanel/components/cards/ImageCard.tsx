@@ -146,7 +146,7 @@ export default function ImageCard({
         )}
       </div>
 
-      <div className="p-3 flex items-center justify-between text-xs text-slate-400">
+      <div className="p-3 flex items-center justify-between text-xs text-slate-400 relative z-50">
         <span className="truncate max-w-[140px]">{fileName}</span>
         {sourceUrl && (
           <a

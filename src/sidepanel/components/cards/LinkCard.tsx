@@ -102,13 +102,13 @@ export default function LinkCard({
       </div>
 
       {/* Content */}
-      <a 
-        href={url} 
-        target="_blank" 
-        rel="noopener noreferrer"
-        className="block p-4 hover:bg-slate-50 transition-colors cursor-pointer rounded-lg relative z-10"
-      >
-        <div className="flex items-start gap-3">
+      <div className="flex">
+        <a 
+          href={url} 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="inline-flex items-start gap-3 m-4 p-2 hover:bg-slate-50 transition-colors cursor-pointer rounded-lg relative z-50 max-w-[80%]"
+        >
           <div className="shrink-0 w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center overflow-hidden">
             {sourceIcon && !iconError ? (
               <img
@@ -132,8 +132,8 @@ export default function LinkCard({
               {getDomain(url)}
             </p>
           </div>
-        </div>
-      </a>
+        </a>
+      </div>
     </div>
   )
 }
