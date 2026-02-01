@@ -189,7 +189,7 @@ export default function TextCard({
       <div className="absolute inset-0 z-40 pointer-events-none">
         {/* Top Left - Restore */}
         <div
-          className="absolute top-0 left-0 w-[42%] h-[42%] pointer-events-auto group/tl"
+          className="absolute top-0 left-0 w-[48%] h-[48%] pointer-events-auto group/tl"
           onDoubleClick={handleEnterEdit}
         >
           {hasEdited && originalText && (
@@ -216,7 +216,7 @@ export default function TextCard({
 
         {/* Top Right - Copy */}
         <div
-          className="absolute top-0 right-0 w-[42%] h-[42%] pointer-events-auto group/tr"
+          className="absolute top-0 right-0 w-[48%] h-[48%] pointer-events-auto group/tr"
           onDoubleClick={handleEnterEdit}
         >
           <button
@@ -247,13 +247,13 @@ export default function TextCard({
 
         {/* Bottom Left - Empty */}
         <div
-          className="absolute bottom-0 left-0 w-[42%] h-[42%] pointer-events-auto group/bl"
+          className="absolute bottom-0 left-0 w-[48%] h-[48%] pointer-events-auto group/bl"
           onDoubleClick={handleEnterEdit}
         />
 
         {/* Bottom Right - Delete */}
         <div
-          className="absolute bottom-0 right-0 w-[42%] h-[42%] pointer-events-auto group/br"
+          className="absolute bottom-0 right-0 w-[48%] h-[48%] pointer-events-auto group/br"
           onDoubleClick={handleEnterEdit}
         >
           <button
@@ -320,12 +320,12 @@ export default function TextCard({
       </div>
 
       {/* Actions Row */}
-      <div className="flex items-center justify-between mt-2 min-h-[24px] relative z-50">
+      <div className="flex items-center justify-between mt-2 min-h-[24px] relative z-50 pointer-events-none">
         <div>
           {isLongText && !isEditing && (
             <button
               onClick={() => setExpanded(!expanded)}
-              className="text-blue-600 hover:text-blue-700 text-xs font-medium"
+              className="text-blue-600 hover:text-blue-700 text-xs font-medium pointer-events-auto"
             >
               {expanded ? '收起' : '展开全部'}
             </button>
@@ -349,7 +349,7 @@ export default function TextCard({
                   data-action="save-text"
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={handleSave}
-                  className="text-xs px-2 py-1 rounded bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                  className="text-xs px-2 py-1 rounded bg-blue-600 text-white hover:bg-blue-700 transition-colors pointer-events-auto"
                 >
                   完成
                 </button>
@@ -365,7 +365,7 @@ export default function TextCard({
                 <button
                   key="edit-btn"
                   onClick={handleEnterEdit}
-                  className="text-xs px-2 py-1 rounded text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                  className="text-xs px-2 py-1 rounded text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors pointer-events-auto"
                 >
                   编辑
                 </button>
@@ -377,7 +377,7 @@ export default function TextCard({
 
       {/* Footer with source */}
       {sourceUrl && !isEditing && (
-        <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-end gap-1.5 text-xs text-slate-400 relative z-50">
+        <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-start gap-1.5 text-xs text-slate-400 relative z-50 pointer-events-none">
           {sourceIcon && !iconError && (
             <img
               src={sourceIcon}
@@ -390,7 +390,7 @@ export default function TextCard({
             href={sourceUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="hover:text-blue-600 truncate max-w-[180px]"
+            className="hover:text-blue-600 truncate max-w-[180px] pointer-events-auto"
           >
             {getDomain(sourceUrl)}
           </a>

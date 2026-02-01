@@ -61,10 +61,10 @@ export default function ImageCard({
       {/* Quadrant Grid & Buttons */}
       <div className="absolute inset-0 z-40 pointer-events-none">
         {/* Top Left - Empty */}
-        <div className="absolute top-0 left-0 w-[42%] h-[42%] pointer-events-auto group/tl" />
+        <div className="absolute top-0 left-0 w-[48%] h-[48%] pointer-events-auto group/tl" />
 
         {/* Top Right - Copy */}
-        <div className="absolute top-0 right-0 w-[42%] h-[42%] pointer-events-auto group/tr">
+        <div className="absolute top-0 right-0 w-[48%] h-[48%] pointer-events-auto group/tr">
           {sourceUrl && (
             <button
               onClick={handleCopy}
@@ -91,10 +91,10 @@ export default function ImageCard({
         </div>
 
         {/* Bottom Left - Empty */}
-        <div className="absolute bottom-0 left-0 w-[42%] h-[42%] pointer-events-auto group/bl" />
+        <div className="absolute bottom-0 left-0 w-[48%] h-[48%] pointer-events-auto group/bl" />
 
         {/* Bottom Right - Delete */}
-        <div className="absolute bottom-0 right-0 w-[42%] h-[42%] pointer-events-auto group/br">
+        <div className="absolute bottom-0 right-0 w-[48%] h-[48%] pointer-events-auto group/br">
           <button
             onClick={(e) => {
               e.stopPropagation()
@@ -146,18 +146,20 @@ export default function ImageCard({
         )}
       </div>
 
-      <div className="p-3 flex items-center justify-between text-xs text-slate-400 relative z-50">
-        <span className="truncate max-w-[140px]">{fileName}</span>
-        {sourceUrl && (
-          <a
-            href={sourceUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:text-blue-600 truncate max-w-[100px]"
-          >
-            {getDomain(sourceUrl)}
-          </a>
-        )}
+      <div className="p-3 flex items-center justify-between text-xs text-slate-400 relative z-50 pointer-events-none">
+        <div className="flex-1 min-w-0">
+          {sourceUrl && (
+            <a
+              href={sourceUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-blue-600 truncate inline-flex items-center gap-1 pointer-events-auto"
+            >
+              {getDomain(sourceUrl)}
+            </a>
+          )}
+        </div>
+        <span className="truncate max-w-[120px] shrink-0 ml-2 pointer-events-auto">{fileName}</span>
       </div>
     </div>
   )

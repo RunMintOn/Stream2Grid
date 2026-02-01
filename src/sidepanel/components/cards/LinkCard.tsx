@@ -51,10 +51,10 @@ export default function LinkCard({
       {/* Quadrant Grid & Buttons */}
       <div className="absolute inset-0 z-40 pointer-events-none">
         {/* Top Left - Empty */}
-        <div className="absolute top-0 left-0 w-[42%] h-[42%] pointer-events-auto group/tl" />
+        <div className="absolute top-0 left-0 w-[48%] h-[48%] pointer-events-auto group/tl" />
 
         {/* Top Right - Copy */}
-        <div className="absolute top-0 right-0 w-[42%] h-[42%] pointer-events-auto group/tr">
+        <div className="absolute top-0 right-0 w-[48%] h-[48%] pointer-events-auto group/tr">
           <button
             onClick={handleCopy}
             className={`
@@ -79,10 +79,10 @@ export default function LinkCard({
         </div>
 
         {/* Bottom Left - Empty */}
-        <div className="absolute bottom-0 left-0 w-[42%] h-[42%] pointer-events-auto group/bl" />
+        <div className="absolute bottom-0 left-0 w-[48%] h-[48%] pointer-events-auto group/bl" />
 
         {/* Bottom Right - Delete */}
-        <div className="absolute bottom-0 right-0 w-[42%] h-[42%] pointer-events-auto group/br">
+        <div className="absolute bottom-0 right-0 w-[48%] h-[48%] pointer-events-auto group/br">
           <button
             onClick={handleDelete}
             className={`
@@ -107,7 +107,7 @@ export default function LinkCard({
           href={url} 
           target="_blank" 
           rel="noopener noreferrer"
-          className="inline-flex items-start gap-3 m-4 p-2 hover:bg-slate-50 transition-colors cursor-pointer rounded-lg relative z-50 max-w-[80%]"
+          className="inline-flex items-start gap-3 m-4 p-2 hover:bg-slate-50 transition-colors cursor-pointer rounded-lg relative z-50 max-w-[80%] pointer-events-auto"
         >
           <div className="shrink-0 w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center overflow-hidden">
             {sourceIcon && !iconError ? (
